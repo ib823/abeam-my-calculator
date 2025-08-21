@@ -1,46 +1,100 @@
 import React, { useMemo, useState, useEffect } from "react";
 
-/* ---------- Data ---------- */
+/* ---------- Enhanced Data Structures ---------- */
 const SG_CAPS = [
-  { key: "gl_aa_payments_open", label: "GL / AA / Payments / Open-Item", days: 193 },
-  { key: "p2p_inv_acct", label: "Procurement & Inventory Accounting", days: 90 },
-  { key: "local_close_analytics", label: "Local Close & Analytics", days: 39 },
-  { key: "drc_tax", label: "DRC + Tax Setup", days: 26 },
-  { key: "collections", label: "Collections Management", days: 26 },
-  { key: "credit", label: "Credit Management", days: 26 },
-  { key: "sales_service", label: "Sales & Service Accounting", days: 77 },
-  { key: "overhead_prod_margin", label: "Overhead / Production / Margin", days: 103 },
-  { key: "lease", label: "Lease Accounting", days: 64 },
-  { key: "cash_mgmt", label: "Cash Management & Liquidity", days: 51 },
-  { key: "trade_comp", label: "Trade Compliance", days: 64 },
+  { key: "gl_aa_payments_open", label: "GL / AA / Payments / Open-Item", days: 193, category: "core" },
+  { key: "p2p_inv_acct", label: "Procurement & Inventory Accounting", days: 90, category: "core" },
+  { key: "local_close_analytics", label: "Local Close & Analytics", days: 39, category: "reporting" },
+  { key: "drc_tax", label: "DRC + Tax Setup", days: 26, category: "compliance" },
+  { key: "collections", label: "Collections Management", days: 26, category: "finance" },
+  { key: "credit", label: "Credit Management", days: 26, category: "finance" },
+  { key: "sales_service", label: "Sales & Service Accounting", days: 77, category: "core" },
+  { key: "overhead_prod_margin", label: "Overhead / Production / Margin", days: 103, category: "manufacturing" },
+  { key: "lease", label: "Lease Accounting", days: 64, category: "advanced" },
+  { key: "cash_mgmt", label: "Cash Management & Liquidity", days: 51, category: "finance" },
+  { key: "trade_comp", label: "Trade Compliance", days: 64, category: "compliance" },
 ];
+
 const DEFAULT_MY_MULTIPLIERS = Object.fromEntries(SG_CAPS.map(c => [c.key, 1]));
 
 const FORMS = [
-  { key: "tax_invoice", label: "Tax Invoice", days: 4 },
-  { key: "credit_note", label: "Credit Note", days: 3 },
-  { key: "debit_note", label: "Debit Note", days: 3 },
-  { key: "purchase_order", label: "Purchase Order", days: 4 },
-  { key: "payment_advice", label: "Payment Advice", days: 2 },
-  { key: "wht_cert", label: "Withholding Tax Certificate", days: 3 },
-  { key: "delivery_note", label: "Delivery Note", days: 3 },
-  { key: "grn", label: "Goods Receipt Note", days: 2 },
-  { key: "remittance", label: "Remittance Advice", days: 2 },
-  { key: "soa", label: "Statement of Account", days: 3 },
+  { key: "tax_invoice", label: "Tax Invoice", days: 4, priority: "high", malaysiaSpecific: true },
+  { key: "credit_note", label: "Credit Note", days: 3, priority: "high", malaysiaSpecific: false },
+  { key: "debit_note", label: "Debit Note", days: 3, priority: "medium", malaysiaSpecific: false },
+  { key: "purchase_order", label: "Purchase Order", days: 4, priority: "high", malaysiaSpecific: true },
+  { key: "payment_advice", label: "Payment Advice", days: 2, priority: "medium", malaysiaSpecific: true },
+  { key: "wht_cert", label: "Withholding Tax Certificate", days: 3, priority: "high", malaysiaSpecific: true },
+  { key: "delivery_note", label: "Delivery Note", days: 3, priority: "medium", malaysiaSpecific: false },
+  { key: "grn", label: "Goods Receipt Note", days: 2, priority: "medium", malaysiaSpecific: false },
+  { key: "remittance", label: "Remittance Advice", days: 2, priority: "low", malaysiaSpecific: true },
+  { key: "soa", label: "Statement of Account", days: 3, priority: "medium", malaysiaSpecific: false },
 ];
+
 const INTERFACES = [
-  { key: "if_payroll_fi", label: "HR/Payroll → FI Posting", days: 5 },
-  { key: "if_open_items", label: "Legacy AR/AP Open-Items Upload", days: 5 },
-  { key: "if_bank_export", label: "Bank Export File (payment)", days: 5 },
+  { key: "if_payroll_fi", label: "HR/Payroll → FI Posting", days: 5, complexity: "medium" },
+  { key: "if_open_items", label: "Legacy AR/AP Open-Items Upload", days: 5, complexity: "low" },
+  { key: "if_bank_export", label: "Bank Export File (payment)", days: 5, complexity: "medium" },
+  { key: "if_sst_reporting", label: "SST Reporting to LHDN", days: 8, complexity: "high" },
+  { key: "if_epf_socso", label: "EPF/SOCSO Integration", days: 6, complexity: "medium" },
 ];
+
+const INDUSTRY_TEMPLATES = {
+  electronics: {
+    name: "Electronics Manufacturing",
+    multipliers: { gl_aa_payments_open: 1.1, overhead_prod_margin: 1.2, trade_comp: 1.3 },
+    requiredForms: ['tax_invoice', 'purchase_order', 'delivery_note', 'grn'],
+    requiredInterfaces: ['if_payroll_fi', 'if_bank_export'],
+    additionalDays: 15,
+    description: "Optimized for electronics manufacturing with export compliance"
+  },
+  foodProcessing: {
+    name: "Food Processing",
+    multipliers: { overhead_prod_margin: 1.3, trade_comp: 1.4, collections: 1.1 },
+    requiredForms: ['tax_invoice', 'purchase_order', 'delivery_note', 'grn', 'soa'],
+    requiredInterfaces: ['if_payroll_fi', 'if_sst_reporting'],
+    additionalDays: 20,
+    description: "Includes HACCP compliance and Halal certification workflows"
+  },
+  automotive: {
+    name: "Automotive Parts",
+    multipliers: { gl_aa_payments_open: 1.15, overhead_prod_margin: 1.25, sales_service: 1.1 },
+    requiredForms: ['tax_invoice', 'purchase_order', 'delivery_note', 'grn', 'wht_cert'],
+    requiredInterfaces: ['if_payroll_fi', 'if_bank_export', 'if_open_items'],
+    additionalDays: 18,
+    description: "Just-in-time inventory and quality management focus"
+  },
+  general: {
+    name: "General Manufacturing",
+    multipliers: {},
+    requiredForms: ['tax_invoice', 'purchase_order', 'payment_advice'],
+    requiredInterfaces: ['if_payroll_fi'],
+    additionalDays: 10,
+    description: "Standard manufacturing processes"
+  }
+};
+
+const RISK_FACTORS = {
+  clientType: { new: 1.15, existing: 1.0, returning: 0.95 },
+  migration: { greenfield: 1.0, eccMigration: 1.25, legacyMigration: 1.35 },
+  timeline: { standard: 1.0, aggressive: 1.3, relaxed: 0.9 },
+  complexity: { simple: 0.9, standard: 1.0, complex: 1.2, veryComplex: 1.4 }
+};
+
+const COMPETITOR_BENCHMARKS = {
+  cbs: { name: "CBS", typicalDiscount: 15, marketPosition: "aggressive" },
+  nttData: { name: "NTT Data", typicalDiscount: 12, marketPosition: "competitive" },
+  deloitte: { name: "Deloitte", typicalDiscount: 5, marketPosition: "premium" },
+  local: { name: "Local Integrators", typicalDiscount: 25, marketPosition: "budget" }
+};
 
 const TECH = { migrationPerCycle: 20 };
 const AMS_CHOICES = [
   { key: "ams30", label: "AMS 30d/year (3y)", daysPerYear: 30 },
   { key: "ams40", label: "AMS 40d/year (3y)", daysPerYear: 40 },
+  { key: "ams50", label: "AMS 50d/year (3y)", daysPerYear: 50 },
 ];
 
-/* ---------- Tiny helpers ---------- */
+/* ---------- Enhanced Helpers ---------- */
 const Num = ({ value }) => <span className="font-mono">{Number(value).toLocaleString()}</span>;
 const Toggle = ({ checked, onChange }) => (
   <button
@@ -51,10 +105,23 @@ const Toggle = ({ checked, onChange }) => (
   </button>
 );
 
-/* ---------- UI building blocks ---------- */
-function Card({ title, subtitle, children, footer }) {
+const PriorityBadge = ({ priority }) => {
+  const colors = {
+    high: "bg-red-100 text-red-800 border-red-200",
+    medium: "bg-yellow-100 text-yellow-800 border-yellow-200", 
+    low: "bg-green-100 text-green-800 border-green-200"
+  };
   return (
-    <section className="bg-white border border-slate-200 rounded-2xl shadow-sm">
+    <span className={`px-2 py-0.5 text-xs rounded-full border ${colors[priority]}`}>
+      {priority}
+    </span>
+  );
+};
+
+/* ---------- UI Components ---------- */
+function Card({ title, subtitle, children, footer, className = "" }) {
+  return (
+    <section className={`bg-white border border-slate-200 rounded-2xl shadow-sm ${className}`}>
       {(title || subtitle) && (
         <div className="px-6 pt-5">
           {title && <h2 className="text-lg font-semibold text-slate-800">{title}</h2>}
@@ -67,7 +134,7 @@ function Card({ title, subtitle, children, footer }) {
   );
 }
 
-function CheckboxRow({ checked, onChange, left, right }) {
+function CheckboxRow({ checked, onChange, left, right, priority }) {
   return (
     <label className="flex items-center justify-between rounded-lg border border-slate-200 p-2.5 hover:bg-slate-50">
       <div className="flex items-center gap-3">
@@ -78,17 +145,41 @@ function CheckboxRow({ checked, onChange, left, right }) {
           onChange={(e) => onChange(e.target.checked)}
         />
         <span className="text-sm text-slate-800">{left}</span>
+        {priority && <PriorityBadge priority={priority} />}
       </div>
       {right && <span className="text-xs text-slate-500">{right}</span>}
     </label>
   );
 }
 
-/* =============================== App =============================== */
+function ExportButton({ data, filename }) {
+  const exportToJSON = () => {
+    const dataStr = JSON.stringify(data, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${filename}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <button
+      onClick={exportToJSON}
+      className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+    >
+      📄 Export Config
+    </button>
+  );
+}
+
+/* =============================== Main App =============================== */
 export default function App() {
-  /* Modes & tiers */
-  const [mode, setMode] = useState("guided");      // guided | free
-  const [tier, setTier] = useState("essential");   // essential | standard | premium
+  /* Core State */
+  const [mode, setMode] = useState("guided");
+  const [tier, setTier] = useState("essential");
+  const [industryTemplate, setIndustryTemplate] = useState("general");
 
   /* Functional */
   const [selectedCaps, setSelectedCaps] = useState(new Set(["gl_aa_payments_open", "p2p_inv_acct", "local_close_analytics"]));
@@ -99,7 +190,7 @@ export default function App() {
   const [selectedForms, setSelectedForms] = useState(new Set(["tax_invoice","credit_note","debit_note","purchase_order","payment_advice","wht_cert"]));
   const [selectedIfs, setSelectedIfs] = useState(new Set());
 
-  /* Technical & wrapper */
+  /* Technical & Wrapper */
   const [securityDays, setSecurityDays] = useState(20);
   const [tenantOpsDays, setTenantOpsDays] = useState(15);
   const [migrationCycles, setMigrationCycles] = useState(2);
@@ -107,6 +198,12 @@ export default function App() {
   const [cutoverDays, setCutoverDays] = useState(12);
   const [trainingDays, setTrainingDays] = useState(15);
   const [hypercareDays, setHypercareDays] = useState(15);
+
+  /* Risk Factors */
+  const [clientType, setClientType] = useState("existing");
+  const [migrationType, setMigrationType] = useState("greenfield");
+  const [timelineType, setTimelineType] = useState("standard");
+  const [complexityLevel, setComplexityLevel] = useState("standard");
 
   /* Commercial */
   const [sgRate, setSgRate] = useState(700);
@@ -117,11 +214,37 @@ export default function App() {
   const [mandayDiscountPct, setMandayDiscountPct] = useState(0);
   const [rateDiscountPct, setRateDiscountPct] = useState(0);
 
+  /* Team Structure */
+  const [teamSize, setTeamSize] = useState(5);
+  const [workingDaysPerWeek, setWorkingDaysPerWeek] = useState(5);
+
+  /* Competitor Comparison */
+  const [competitorPrices, setCompetitorPrices] = useState({
+    cbs: 0, nttData: 0, deloitte: 0, local: 0
+  });
+
   /* AMS */
   const [selectedAMS, setSelectedAMS] = useState(null);
   const [amsDiscountPct, setAmsDiscountPct] = useState(15);
 
-  /* Guided presets */
+  /* Industry Template Application */
+  const applyIndustryTemplate = (template) => {
+    setIndustryTemplate(template);
+    const config = INDUSTRY_TEMPLATES[template];
+    
+    // Apply multipliers
+    const newMultipliers = { ...DEFAULT_MY_MULTIPLIERS };
+    Object.entries(config.multipliers).forEach(([key, multiplier]) => {
+      newMultipliers[key] = multiplier;
+    });
+    setMyMultipliers(newMultipliers);
+    
+    // Apply required forms and interfaces
+    setSelectedForms(new Set(config.requiredForms));
+    setSelectedIfs(new Set(config.requiredInterfaces));
+  };
+
+  /* Guided Presets */
   const applyTier = (t) => {
     setTier(t);
     if (t === "essential") {
@@ -149,70 +272,115 @@ export default function App() {
       setPmoDays(75); setCutoverDays(18); setTrainingDays(25); setHypercareDays(25);
     }
   };
-  useEffect(()=>{ if (mode==="guided") applyTier(tier) }, [mode, tier]);
 
-  /* Calculations */
-  const sgSelected = useMemo(()=>SG_CAPS.filter(c=>selectedCaps.has(c.key)), [selectedCaps]);
-  const sgFunctionalDays = useMemo(()=>{
-    let base = sgSelected.reduce((a,c)=>a+c.days,0);
-    if (includeDRC && !selectedCaps.has("drc_tax")) base += SG_CAPS.find(c=>c.key==="drc_tax").days;
+  useEffect(() => { if (mode === "guided") applyTier(tier) }, [mode, tier]);
+
+  /* Enhanced Calculations */
+  const sgSelected = useMemo(() => SG_CAPS.filter(c => selectedCaps.has(c.key)), [selectedCaps]);
+  
+  const sgFunctionalDays = useMemo(() => {
+    let base = sgSelected.reduce((a, c) => a + c.days, 0);
+    if (includeDRC && !selectedCaps.has("drc_tax")) base += SG_CAPS.find(c => c.key === "drc_tax").days;
     return base;
-  },[sgSelected, includeDRC, selectedCaps]);
-  const sgFunctionalPriceMYR = useMemo(()=> sgFunctionalDays * sgRate * fx, [sgFunctionalDays, sgRate, fx]);
+  }, [sgSelected, includeDRC, selectedCaps]);
+  
+  const sgFunctionalPriceMYR = useMemo(() => sgFunctionalDays * sgRate * fx, [sgFunctionalDays, sgRate, fx]);
 
-  const myFunctionalDays = useMemo(()=>{
-    let total=0;
+  const myFunctionalDays = useMemo(() => {
+    let total = 0;
     sgSelected.forEach(c => total += c.days * (myMultipliers[c.key] ?? 1));
-    if (includeDRC && !selectedCaps.has("drc_tax")) total += SG_CAPS.find(c=>c.key==="drc_tax").days * (myMultipliers["drc_tax"] ?? 1);
+    if (includeDRC && !selectedCaps.has("drc_tax")) total += SG_CAPS.find(c => c.key === "drc_tax").days * (myMultipliers["drc_tax"] ?? 1);
+    
+    // Add industry template additional days
+    const templateConfig = INDUSTRY_TEMPLATES[industryTemplate];
+    total += templateConfig.additionalDays;
+    
     return Math.round(total);
-  },[sgSelected, includeDRC, selectedCaps, myMultipliers]);
+  }, [sgSelected, includeDRC, selectedCaps, myMultipliers, industryTemplate]);
 
-  const formsDays = useMemo(()=> FORMS.filter(f=>selectedForms.has(f.key)).reduce((a,b)=>a+b.days,0),[selectedForms]);
-  const ifDays = useMemo(()=> INTERFACES.filter(i=>selectedIfs.has(i.key)).reduce((a,b)=>a+b.days,0),[selectedIfs]);
+  const formsDays = useMemo(() => FORMS.filter(f => selectedForms.has(f.key)).reduce((a, b) => a + b.days, 0), [selectedForms]);
+  const ifDays = useMemo(() => INTERFACES.filter(i => selectedIfs.has(i.key)).reduce((a, b) => a + b.days, 0), [selectedIfs]);
   const technicalDays = securityDays + tenantOpsDays + migrationCycles * TECH.migrationPerCycle;
   const wrapperDays = pmoDays + cutoverDays + trainingDays + hypercareDays;
 
   const myTotalMandaysRaw = myFunctionalDays + formsDays + ifDays + technicalDays + wrapperDays;
-  const myMandayDiscountFactor = 1 - (allowMandayDiscount ? mandayDiscountPct/100 : 0);
-  const myRateDiscountFactor = 1 - (rateDiscountPct/100);
-  const myTotalMandays = Math.round(myTotalMandaysRaw * myMandayDiscountFactor);
+  
+  // Apply risk factors
+  const riskMultiplier = RISK_FACTORS.clientType[clientType] * 
+                       RISK_FACTORS.migration[migrationType] * 
+                       RISK_FACTORS.timeline[timelineType] * 
+                       RISK_FACTORS.complexity[complexityLevel];
+  
+  const myTotalMandaysWithRisk = Math.round(myTotalMandaysRaw * riskMultiplier);
+  const myMandayDiscountFactor = 1 - (allowMandayDiscount ? mandayDiscountPct / 100 : 0);
+  const myRateDiscountFactor = 1 - (rateDiscountPct / 100);
+  const myTotalMandays = Math.round(myTotalMandaysWithRisk * myMandayDiscountFactor);
   const myProjectRate = Math.round(myRate * myRateDiscountFactor);
   const myProjectPrice = myTotalMandays * myProjectRate;
 
-  const amsBundle = useMemo(()=>{
-    if (!selectedAMS) return { days:0, price:0 };
-    const opt = AMS_CHOICES.find(a=>a.key===selectedAMS);
-    const totalDays = opt.daysPerYear * 3;
-    const discounted = Math.round(totalDays * (1 - amsDiscountPct/100));
-    return { days: discounted, price: discounted * amsRate };
-  },[selectedAMS, amsDiscountPct, amsRate]);
+  // Timeline calculation
+  const timelineWeeks = Math.ceil(myTotalMandays / (teamSize * workingDaysPerWeek));
+  const timelineMonths = Math.round(timelineWeeks / 4.33 * 10) / 10;
 
+  const amsBundle = useMemo(() => {
+    if (!selectedAMS) return { days: 0, price: 0 };
+    const opt = AMS_CHOICES.find(a => a.key === selectedAMS);
+    const totalDays = opt.daysPerYear * 3;
+    const discounted = Math.round(totalDays * (1 - amsDiscountPct / 100));
+    return { days: discounted, price: discounted * amsRate };
+  }, [selectedAMS, amsDiscountPct, amsRate]);
+
+  // Enhanced warnings
   const warnings = [];
   if (wrapperDays < 40) warnings.push("Wrapper effort is very low — PMO/Training/Hypercare may be under-scoped.");
   if (includeDRC && !selectedForms.has("tax_invoice")) warnings.push("DRC selected but Tax Invoice form is not selected.");
+  if (riskMultiplier > 1.3) warnings.push("High risk factors detected — consider additional contingency.");
+  if (myTotalMandays > 800) warnings.push("Project scope is very large — consider phased approach.");
+  if (timelineWeeks > 30) warnings.push("Timeline exceeds 30 weeks — may face resource constraints.");
 
-  /* ---------- UI ---------- */
+  // Export data
+  const exportData = {
+    configuration: {
+      mode, tier, industryTemplate,
+      selectedCaps: Array.from(selectedCaps),
+      selectedForms: Array.from(selectedForms),
+      selectedIfs: Array.from(selectedIfs),
+      riskFactors: { clientType, migrationType, timelineType, complexityLevel },
+      rates: { sgRate, fx, myRate, amsRate }
+    },
+    calculations: {
+      functionalDays: myFunctionalDays,
+      totalMandays: myTotalMandays,
+      projectPrice: myProjectPrice,
+      timeline: { weeks: timelineWeeks, months: timelineMonths },
+      riskMultiplier
+    },
+    timestamp: new Date().toISOString()
+  };
+
+  /* ---------- UI Render ---------- */
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
+      {/* Enhanced Header */}
       <header className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          {/* Brand */}
           <div className="flex items-center gap-3">
-            <img src="/abeam-logo.png" alt="ABeam Consulting" className="h-8 w-auto" />
+            <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">AB</span>
+            </div>
             <div className="hidden sm:block">
               <h1 className="text-lg font-semibold tracking-tight text-slate-900">
                 ABeam Malaysia — Cloud ERP Package Calculator
               </h1>
               <p className="text-xs text-slate-500">
-                SG compares <b>functional only</b>; MY includes wrapper, technical, forms, localization.
+                Enhanced with timeline estimation, risk factors, and industry templates
               </p>
             </div>
           </div>
 
-          {/* Mode + Tier controls */}
           <div className="flex items-center gap-2">
-            {/* Mode */}
+            <ExportButton data={exportData} filename={`abeam-package-${tier}-${new Date().toISOString().split('T')[0]}`} />
+            
             <div className="hidden md:flex rounded-full border border-slate-300 p-0.5">
               <button
                 className={`px-3 py-1.5 rounded-full text-sm ${mode === "guided" ? "bg-blue-600 text-white" : "text-slate-700 hover:bg-slate-50"}`}
@@ -228,7 +396,6 @@ export default function App() {
               </button>
             </div>
 
-            {/* Tiers */}
             {mode === "guided" && (
               <div className="hidden md:flex rounded-full border border-slate-300 p-0.5">
                 {["essential", "standard", "premium"].map((t) => (
@@ -246,10 +413,27 @@ export default function App() {
         </div>
       </header>
 
-      {/* Content */}
+      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left column */}
         <div className="lg:col-span-8 space-y-6">
+          
+          {/* Industry Template Selector */}
+          <Card title="Industry Template" subtitle="Select your manufacturing focus for optimized configurations">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {Object.entries(INDUSTRY_TEMPLATES).map(([key, template]) => (
+                <button
+                  key={key}
+                  className={`p-3 text-left rounded-xl border transition ${industryTemplate === key ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:bg-slate-50'}`}
+                  onClick={() => applyIndustryTemplate(key)}
+                >
+                  <div className="font-medium text-sm">{template.name}</div>
+                  <div className="text-xs text-slate-500 mt-1">{template.description}</div>
+                  <div className="text-xs text-blue-600 mt-1">+{template.additionalDays} days</div>
+                </button>
+              ))}
+            </div>
+          </Card>
+
           {mode === "guided" && (
             <Card footer={<span className="text-xs text-slate-500">Preset scopes & efforts applied</span>}>
               <div className="flex gap-2">
@@ -264,6 +448,44 @@ export default function App() {
               </div>
             </Card>
           )}
+
+          {/* Risk Factors */}
+          <Card title="Risk Factors & Project Parameters" subtitle="Adjust effort based on project complexity and client context">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <SelectField label="Client Type" value={clientType} setValue={setClientType} options={Object.keys(RISK_FACTORS.clientType)} />
+              <SelectField label="Migration Type" value={migrationType} setValue={setMigrationType} options={Object.keys(RISK_FACTORS.migration)} />
+              <SelectField label="Timeline Pressure" value={timelineType} setValue={setTimelineType} options={Object.keys(RISK_FACTORS.timeline)} />
+              <SelectField label="Complexity Level" value={complexityLevel} setValue={setComplexityLevel} options={Object.keys(RISK_FACTORS.complexity)} />
+            </div>
+            <div className="mt-3 p-3 bg-slate-50 rounded-lg">
+              <div className="text-sm text-slate-600">
+                Risk Multiplier: <span className="font-medium">{riskMultiplier.toFixed(2)}x</span>
+                {riskMultiplier > 1.2 && <span className="text-amber-600 ml-2">⚠️ High Risk</span>}
+              </div>
+            </div>
+          </Card>
+
+          {/* Project Timeline & Resources */}
+          <Card title="Project Timeline & Resources" subtitle="Estimate delivery timeline and resource requirements">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Field label="Team Size (FTE)" value={teamSize} setValue={setTeamSize} />
+              <Field label="Working Days/Week" value={workingDaysPerWeek} setValue={setWorkingDaysPerWeek} />
+              <div className="text-sm">
+                <span className="block mb-1 text-slate-600">Estimated Timeline</span>
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <div className="font-medium text-blue-900">{timelineWeeks} weeks</div>
+                  <div className="text-sm text-blue-700">{timelineMonths} months</div>
+                </div>
+              </div>
+              <div className="text-sm">
+                <span className="block mb-1 text-slate-600">Resource Utilization</span>
+                <div className="p-3 bg-green-50 rounded-lg">
+                  <div className="font-medium text-green-900">{Math.round(myTotalMandays / timelineWeeks)} days/week</div>
+                  <div className="text-sm text-green-700">{((myTotalMandays / timelineWeeks / teamSize) * 100).toFixed(0)}% team utilization</div>
+                </div>
+              </div>
+            </div>
+          </Card>
 
           {/* Commercial & Rates */}
           <Card title="Commercial & Rates" subtitle="Adjust base rates & discounts. AMS is optional.">
@@ -284,9 +506,42 @@ export default function App() {
             </div>
           </Card>
 
-          {/* Functional */}
+          {/* Competitor Comparison */}
+          <Card title="Competitive Benchmarking" subtitle="Compare your pricing against key competitors">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {Object.entries(COMPETITOR_BENCHMARKS).map(([key, competitor]) => (
+                <Field 
+                  key={key}
+                  label={`${competitor.name} Price (RM)`} 
+                  value={competitorPrices[key]} 
+                  setValue={(value) => setCompetitorPrices(prev => ({...prev, [key]: value}))} 
+                />
+              ))}
+            </div>
+            <div className="mt-4 p-3 bg-slate-50 rounded-lg">
+              <div className="text-sm text-slate-600 mb-2">Competitive Position:</div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                {Object.entries(competitorPrices).map(([key, price]) => {
+                  if (price === 0) return null;
+                  const competitor = COMPETITOR_BENCHMARKS[key];
+                  const difference = ((myProjectPrice - price) / price * 100).toFixed(1);
+                  const isHigher = myProjectPrice > price;
+                  return (
+                    <div key={key} className={`p-2 rounded ${isHigher ? 'bg-red-50' : 'bg-green-50'}`}>
+                      <div className="font-medium">{competitor.name}</div>
+                      <div className={isHigher ? 'text-red-600' : 'text-green-600'}>
+                        {isHigher ? '+' : ''}{difference}%
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </Card>
+
+          {/* Functional Capabilities */}
           <Card
-            title="Functional"
+            title="Functional Capabilities"
             subtitle="Start from ABeam SG capabilities; tune MY multipliers."
             footer={<div className="text-[11px] text-slate-500">Use multipliers to reflect Malaysia complexity or template efficiencies (e.g., 1.10 for SST overhead, 0.95 for standardized processes).</div>}
           >
@@ -304,7 +559,6 @@ export default function App() {
             </div>
 
             <div className="grid lg:grid-cols-12 gap-6">
-              {/* Left: functional checklist */}
               <div className="lg:col-span-7">
                 <div className="grid sm:grid-cols-2 gap-3">
                   {SG_CAPS.map((c) => {
@@ -332,7 +586,17 @@ export default function App() {
                                 {c.days}d (SG)
                               </span>
                             </div>
-                            <p className="text-xs text-slate-500 mt-1">Toggle to include/exclude this scope item in the package.</p>
+                            <div className="flex items-center gap-1 mt-1">
+                              <span className="text-xs text-slate-500">Toggle to include/exclude this scope item.</span>
+                              <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                                c.category === 'core' ? 'bg-blue-100 text-blue-700' :
+                                c.category === 'manufacturing' ? 'bg-purple-100 text-purple-700' :
+                                c.category === 'compliance' ? 'bg-orange-100 text-orange-700' :
+                                'bg-gray-100 text-gray-700'
+                              }`}>
+                                {c.category}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </label>
@@ -341,7 +605,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Right: multipliers */}
               <div className="lg:col-span-5">
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex items-center justify-between mb-2">
@@ -377,11 +640,28 @@ export default function App() {
             </div>
           </Card>
 
-          {/* FRICEW */}
-          <Card title="FRICEW — Forms & Common Interfaces">
+          {/* Enhanced FRICEW */}
+          <Card title="FRICEW — Forms & Interfaces" subtitle="Malaysian-specific forms and system integrations">
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <p className="text-sm text-slate-600 mb-2">Forms</p>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm text-slate-600">Forms</p>
+                  <div className="flex gap-1">
+                    <button 
+                      onClick={() => setSelectedForms(new Set(FORMS.filter(f => f.priority === 'high').map(f => f.key)))}
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      High Priority Only
+                    </button>
+                    <span className="text-xs text-slate-400">|</span>
+                    <button 
+                      onClick={() => setSelectedForms(new Set(FORMS.map(f => f.key)))}
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      Select All
+                    </button>
+                  </div>
+                </div>
                 <div className="space-y-2">
                   {FORMS.map(f => (
                     <CheckboxRow
@@ -392,15 +672,21 @@ export default function App() {
                         checked ? ns.add(f.key) : ns.delete(f.key);
                         setSelectedForms(ns);
                       }}
-                      left={f.label}
+                      left={
+                        <div className="flex items-center gap-2">
+                          {f.label}
+                          {f.malaysiaSpecific && <span className="text-xs text-blue-600">🇲🇾</span>}
+                        </div>
+                      }
                       right={`${f.days}d`}
+                      priority={f.priority}
                     />
                   ))}
                 </div>
               </div>
 
               <div>
-                <p className="text-sm text-slate-600 mb-2">Common Interfaces</p>
+                <p className="text-sm text-slate-600 mb-3">System Interfaces</p>
                 <div className="space-y-2">
                   {INTERFACES.map(i => (
                     <CheckboxRow
@@ -411,7 +697,18 @@ export default function App() {
                         checked ? ns.add(i.key) : ns.delete(i.key);
                         setSelectedIfs(ns);
                       }}
-                      left={i.label}
+                      left={
+                        <div className="flex items-center gap-2">
+                          {i.label}
+                          <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                            i.complexity === 'high' ? 'bg-red-100 text-red-700' :
+                            i.complexity === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-green-100 text-green-700'
+                          }`}>
+                            {i.complexity}
+                          </span>
+                        </div>
+                      }
                       right={`${i.days}d`}
                     />
                   ))}
@@ -437,8 +734,8 @@ export default function App() {
             </div>
           </Card>
 
-          {/* AMS */}
-          <Card title="AMS Bundle (Optional, 3-year)">
+          {/* Enhanced AMS */}
+          <Card title="AMS Bundle (Optional, 3-year)" subtitle="Long-term support packages for ongoing partnership">
             <div className="grid md:grid-cols-3 gap-4 items-start">
               <div className="space-y-2">
                 {AMS_CHOICES.map(a => (
@@ -463,10 +760,10 @@ export default function App() {
           </Card>
         </div>
 
-        {/* Sticky summary (right) */}
+        {/* Enhanced Sticky Summary */}
         <aside className="lg:col-span-4">
           <div className="sticky top-6 space-y-3">
-            <Card title="Summary & Comparison" subtitle={mode==='guided' ? `Tier: ${tier}` : undefined}>
+            <Card title="Summary & Comparison" subtitle={mode==='guided' ? `Tier: ${tier} | Industry: ${INDUSTRY_TEMPLATES[industryTemplate].name}` : undefined}>
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-2">
                 <div className="text-sm font-semibold mb-1">ABeam Singapore (functional only)</div>
                 <div className="text-sm">Selected functional: <Num value={sgFunctionalDays}/> d</div>
@@ -479,11 +776,19 @@ export default function App() {
                 <div className="text-sm">FRICEW: <Num value={formsDays + ifDays}/> d</div>
                 <div className="text-sm">Technical: <Num value={technicalDays}/> d</div>
                 <div className="text-sm">Wrapper: <Num value={wrapperDays}/> d</div>
+                <div className="text-sm">Risk Adjustment: {((riskMultiplier - 1) * 100).toFixed(1)}%</div>
                 <hr className="my-2"/>
                 <div className="text-sm font-semibold">Total Mandays: <Num value={myTotalMandays}/> d</div>
                 <div className="text-sm">Project Rate: RM <Num value={myProjectRate}/></div>
                 <div className="text-lg font-bold text-slate-900 mt-1">Project Price: RM <Num value={myProjectPrice}/></div>
                 {selectedAMS && (<div className="text-sm mt-1">AMS (3y): <Num value={amsBundle.days}/> d → RM <Num value={amsBundle.price}/></div>)}
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                <div className="text-sm font-semibold text-blue-900 mb-1">Timeline & Resources</div>
+                <div className="text-sm text-blue-800">Duration: {timelineWeeks} weeks ({timelineMonths} months)</div>
+                <div className="text-sm text-blue-800">Team: {teamSize} FTE × {workingDaysPerWeek} days/week</div>
+                <div className="text-sm text-blue-800">Utilization: {((myTotalMandays / timelineWeeks / teamSize) * 100).toFixed(0)}%</div>
               </div>
 
               {warnings.length>0 && (
@@ -500,7 +805,7 @@ export default function App() {
   );
 }
 
-/* ---------- Local UI inputs ---------- */
+/* ---------- Enhanced UI Components ---------- */
 function Field({ label, value, setValue, step="1" }) {
   return (
     <label className="text-sm">
@@ -512,6 +817,25 @@ function Field({ label, value, setValue, step="1" }) {
         onChange={(e)=>setValue(+e.target.value || 0)}
         className="w-full rounded-md border border-slate-300 px-3 py-2 text-right shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
       />
+    </label>
+  );
+}
+
+function SelectField({ label, value, setValue, options }) {
+  return (
+    <label className="text-sm">
+      <span className="block mb-1 text-slate-600">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className="w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+      >
+        {options.map(option => (
+          <option key={option} value={option}>
+            {option.charAt(0).toUpperCase() + option.slice(1)}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }
