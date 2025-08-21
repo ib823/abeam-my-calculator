@@ -152,7 +152,7 @@ function CheckboxRow({ checked, onChange, left, right, priority }) {
   );
 }
 
-function ExportButton({ data, filename }) {
+function ExportButtons({ data, filename, summary }) {
   const exportToJSON = () => {
     const dataStr = JSON.stringify(data, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -164,13 +164,183 @@ function ExportButton({ data, filename }) {
     URL.revokeObjectURL(url);
   };
 
+  const exportToPDF = () => {
+    // Create a new window for the PDF content
+    const printWindow = window.open('', '_blank');
+    
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>ABeam Malaysia SAP Package Proposal</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+          .header { border-bottom: 3px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; }
+          .company-logo { font-size: 24px; font-weight: bold; color: #2563eb; }
+          .title { font-size: 28px; font-weight: bold; margin: 10px 0; }
+          .subtitle { color: #666; margin-bottom: 20px; }
+          .section { margin: 25px 0; }
+          .section-title { font-size: 18px; font-weight: bold; color: #2563eb; margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
+          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 15px 0; }
+          .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; background: #f9fafb; }
+          .highlight { background: #dbeafe; border: 1px solid #3b82f6; padding: 15px; border-radius: 8px; margin: 15px 0; }
+          .price-box { background: #1e40af; color: white; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; }
+          .price-main { font-size: 32px; font-weight: bold; }
+          .price-sub { font-size: 14px; opacity: 0.9; }
+          table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+          th, td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; }
+          th { background: #f3f4f6; font-weight: bold; }
+          .text-right { text-align: right; }
+          .warning { background: #fef3c7; border: 1px solid #f59e0b; padding: 10px; border-radius: 6px; margin: 10px 0; }
+          .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #666; }
+          @media print { body { margin: 20px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="company-logo">ABeam Consulting Malaysia</div>
+          <div class="title">SAP Cloud ERP Implementation Proposal</div>
+          <div class="subtitle">Package: ${summary.tier.toUpperCase()} | Industry: ${summary.industryTemplate} | Generated: ${new Date().toLocaleDateString()}</div>
+        </div>
+
+        <div class="price-box">
+          <div class="price-main">RM ${summary.projectPrice.toLocaleString()}</div>
+          <div class="price-sub">${summary.totalMandays} mandays | ${summary.timelineWeeks} weeks delivery</div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Executive Summary</div>
+          <div class="grid">
+            <div class="card">
+              <strong>Implementation Approach</strong><br>
+              Tier: ${summary.tier.toUpperCase()}<br>
+              Industry Template: ${summary.industryTemplate}<br>
+              Risk Level: ${summary.riskMultiplier.toFixed(2)}x multiplier
+            </div>
+            <div class="card">
+              <strong>Timeline & Resources</strong><br>
+              Duration: ${summary.timelineWeeks} weeks (${summary.timelineMonths} months)<br>
+              Team Size: ${summary.teamSize} FTE<br>
+              Utilization: ${summary.utilization}%
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Effort Breakdown</div>
+          <table>
+            <tr><th>Component</th><th class="text-right">Days</th><th class="text-right">Cost (RM)</th></tr>
+            <tr><td>Functional Implementation</td><td class="text-right">${summary.functionalDays}</td><td class="text-right">${(summary.functionalDays * summary.projectRate).toLocaleString()}</td></tr>
+            <tr><td>Forms & Interfaces (FRICEW)</td><td class="text-right">${summary.fricewDays}</td><td class="text-right">${(summary.fricewDays * summary.projectRate).toLocaleString()}</td></tr>
+            <tr><td>Technical Setup</td><td class="text-right">${summary.technicalDays}</td><td class="text-right">${(summary.technicalDays * summary.projectRate).toLocaleString()}</td></tr>
+            <tr><td>Project Delivery Wrapper</td><td class="text-right">${summary.wrapperDays}</td><td class="text-right">${(summary.wrapperDays * summary.projectRate).toLocaleString()}</td></tr>
+            <tr style="font-weight: bold; background: #f3f4f6;"><td>Total Implementation</td><td class="text-right">${summary.totalMandays}</td><td class="text-right">${summary.projectPrice.toLocaleString()}</td></tr>
+            ${summary.amsPrice > 0 ? `<tr><td>AMS Bundle (3 years)</td><td class="text-right">${summary.amsDays}</td><td class="text-right">${summary.amsPrice.toLocaleString()}</td></tr>` : ''}
+          </table>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Singapore Comparison</div>
+          <div class="highlight">
+            <strong>ABeam Singapore vs Malaysia:</strong><br>
+            Singapore (functional only): ${summary.sgFunctionalDays} days → RM ${summary.sgFunctionalPriceMYR.toLocaleString()}<br>
+            Malaysia (complete package): ${summary.totalMandays} days → RM ${summary.projectPrice.toLocaleString()}<br>
+            <strong>Malaysia provides complete solution with ${summary.efficiency}% efficiency gain</strong>
+          </div>
+        </div>
+
+        ${summary.competitorAnalysis.length > 0 ? `
+        <div class="section">
+          <div class="section-title">Competitive Analysis</div>
+          <table>
+            <tr><th>Competitor</th><th class="text-right">Price (RM)</th><th class="text-right">Difference</th><th>Position</th></tr>
+            ${summary.competitorAnalysis.map(comp => `
+              <tr>
+                <td>${comp.name}</td>
+                <td class="text-right">${comp.price.toLocaleString()}</td>
+                <td class="text-right" style="color: ${comp.isHigher ? '#dc2626' : '#16a34a'}">${comp.difference}</td>
+                <td>${comp.position}</td>
+              </tr>
+            `).join('')}
+          </table>
+        </div>
+        ` : ''}
+
+        <div class="section">
+          <div class="section-title">Scope & Deliverables</div>
+          <div class="grid">
+            <div class="card">
+              <strong>Functional Capabilities</strong><br>
+              ${summary.selectedCapabilities.join('<br>')}
+            </div>
+            <div class="card">
+              <strong>Forms & Interfaces</strong><br>
+              ${summary.selectedForms.join('<br>')}<br>
+              <br><strong>Interfaces:</strong><br>
+              ${summary.selectedInterfaces.join('<br>')}
+            </div>
+          </div>
+        </div>
+
+        ${summary.warnings.length > 0 ? `
+        <div class="section">
+          <div class="section-title">Project Considerations</div>
+          ${summary.warnings.map(warning => `<div class="warning">${warning}</div>`).join('')}
+        </div>
+        ` : ''}
+
+        <div class="section">
+          <div class="section-title">Commercial Terms</div>
+          <div class="grid">
+            <div class="card">
+              <strong>Pricing Structure</strong><br>
+              Base Rate: RM ${summary.projectRate.toLocaleString()}/day<br>
+              ${summary.mandayDiscount > 0 ? `Manday Discount: ${summary.mandayDiscount}%<br>` : ''}
+              ${summary.rateDiscount > 0 ? `Rate Discount: ${summary.rateDiscount}%<br>` : ''}
+              Fixed Price Implementation
+            </div>
+            <div class="card">
+              <strong>Payment Terms</strong><br>
+              Total Investment: RM ${summary.projectPrice.toLocaleString()}<br>
+              Timeline: ${summary.timelineWeeks} weeks<br>
+              ${summary.amsPrice > 0 ? `Optional AMS: RM ${summary.amsPrice.toLocaleString()}<br>` : ''}
+              Includes 1-month hypercare
+            </div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p>This proposal is generated by ABeam Malaysia SAP Package Calculator and represents our standard implementation approach. Final scope and pricing subject to detailed requirements analysis and formal agreement.</p>
+          <p><strong>ABeam Consulting Malaysia</strong> | SAP Cloud ERP Implementation Services | Generated: ${new Date().toLocaleString()}</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    
+    // Wait for content to load, then print
+    setTimeout(() => {
+      printWindow.print();
+    }, 500);
+  };
+
   return (
-    <button
-      onClick={exportToJSON}
-      className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-    >
-      📄 Export Config
-    </button>
+    <div className="flex gap-2">
+      <button
+        onClick={exportToPDF}
+        className="px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+      >
+        📄 Export PDF
+      </button>
+      <button
+        onClick={exportToJSON}
+        className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+      >
+        ⚙️ Save Config
+      </button>
+    </div>
   );
 }
 
@@ -338,7 +508,7 @@ export default function App() {
   if (myTotalMandays > 800) warnings.push("Project scope is very large — consider phased approach.");
   if (timelineWeeks > 30) warnings.push("Timeline exceeds 30 weeks — may face resource constraints.");
 
-  // Export data
+  // Enhanced export data with summary for PDF
   const exportData = {
     configuration: {
       mode, tier, industryTemplate,
@@ -356,6 +526,44 @@ export default function App() {
       riskMultiplier
     },
     timestamp: new Date().toISOString()
+  };
+
+  // Summary data for PDF export
+  const pdfSummary = {
+    tier,
+    industryTemplate: INDUSTRY_TEMPLATES[industryTemplate].name,
+    projectPrice: myProjectPrice,
+    totalMandays: myTotalMandays,
+    timelineWeeks,
+    timelineMonths,
+    teamSize,
+    utilization: Math.round((myTotalMandays / timelineWeeks / teamSize) * 100),
+    riskMultiplier,
+    functionalDays: myFunctionalDays,
+    fricewDays: formsDays + ifDays,
+    technicalDays,
+    wrapperDays,
+    projectRate: myProjectRate,
+    sgFunctionalDays,
+    sgFunctionalPriceMYR: Math.round(sgFunctionalPriceMYR),
+    efficiency: Math.round((1 - myTotalMandays / sgFunctionalDays) * 100),
+    amsDays: amsBundle.days,
+    amsPrice: amsBundle.price,
+    mandayDiscount: allowMandayDiscount ? mandayDiscountPct : 0,
+    rateDiscount: rateDiscountPct,
+    selectedCapabilities: sgSelected.map(c => c.label),
+    selectedForms: FORMS.filter(f => selectedForms.has(f.key)).map(f => f.label),
+    selectedInterfaces: INTERFACES.filter(i => selectedIfs.has(i.key)).map(i => i.label),
+    warnings,
+    competitorAnalysis: Object.entries(competitorPrices)
+      .filter(([key, price]) => price > 0)
+      .map(([key, price]) => ({
+        name: COMPETITOR_BENCHMARKS[key].name,
+        price,
+        difference: `${myProjectPrice > price ? '+' : ''}${((myProjectPrice - price) / price * 100).toFixed(1)}%`,
+        isHigher: myProjectPrice > price,
+        position: myProjectPrice > price ? 'Higher' : 'Lower'
+      }))
   };
 
   /* ---------- UI Render ---------- */
@@ -379,7 +587,11 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
-            <ExportButton data={exportData} filename={`abeam-package-${tier}-${new Date().toISOString().split('T')[0]}`} />
+            <ExportButtons 
+              data={exportData} 
+              filename={`abeam-package-${tier}-${new Date().toISOString().split('T')[0]}`}
+              summary={pdfSummary}
+            />
             
             <div className="hidden md:flex rounded-full border border-slate-300 p-0.5">
               <button
