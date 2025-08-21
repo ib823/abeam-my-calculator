@@ -290,8 +290,9 @@ function ExportButtons({ data, filename, summary }) {
   };
 
   const exportToPDF = () => {
-    const printWindow = window.open('', '_blank');
-    const htmlContent = `
+  const printWindow = window.open('', '_blank');
+  const logoUrl = `${window.location.origin}/abeam-logo.png`;
+  const htmlContent = `
       <!DOCTYPE html><html><head><title>ABeam Malaysia SAP Package Proposal</title>
       <style>
         body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
@@ -315,11 +316,14 @@ function ExportButtons({ data, filename, summary }) {
         .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #666; }
         @media print { body { margin: 20px; } }
       </style></head><body>
-        <div class="header">
-          <div class="company-logo">ABeam Consulting Malaysia</div>
-          <div class="title">SAP Cloud ERP Implementation Proposal</div>
-          <div class="subtitle">Package: ${summary.tier.toUpperCase()} | Industry: ${summary.industryTemplate} | Generated: ${new Date().toLocaleDateString()}</div>
-        </div>
+        <div class="header" style="display:flex; align-items:center; gap:12px;">
+  <img src="${logoUrl}" alt="ABeam Consulting" style="height:40px; width:auto;" />
+  <div>
+    <div class="title">SAP Cloud ERP Implementation Proposal</div>
+    <div class="subtitle">Package: ${summary.tier.toUpperCase()} | Industry: ${summary.industryTemplate} | Generated: ${new Date().toLocaleDateString()}</div>
+  </div>
+</div>
+
 
         <div class="price-box">
           <div class="price-main">RM ${summary.projectPrice.toLocaleString()}</div>
@@ -690,16 +694,18 @@ const requiresFinance = useMemo(() => {
       <header className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">AB</span>
-            </div>
-            <div className="hidden sm:block">
-              <h1 className="text-lg font-semibold tracking-tight text-slate-900">
-                ABeam Malaysia — Cloud ERP Package Calculator
-              </h1>
-              <p className="text-xs text-slate-500">Guided presets + free play. SG baseline → MY tuned.</p>
-            </div>
-          </div>
+  <img
+    src="/abeam-logo.png"
+    alt="ABeam Consulting"
+    className="h-8 w-auto"
+  />
+  <div className="hidden sm:block">
+    <h1 className="text-lg font-semibold tracking-tight text-slate-900">
+      ABeam Malaysia — Cloud ERP Package Calculator
+    </h1>
+    <p className="text-xs text-slate-500">Guided presets + free play. SG baseline → MY tuned.</p>
+  </div>
+</div>
 
           <div className="flex items-center gap-2">
             <ExportButtons
