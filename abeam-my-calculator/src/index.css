@@ -1,0 +1,8 @@
+/* Use the new v4 import (reliable) */
+@import "tailwindcss";
+
+/* Optional: tiny smoothing */
+html, body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
