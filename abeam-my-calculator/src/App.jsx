@@ -637,105 +637,139 @@ function ExportButtons({ data, filename, summary }) {
 <!doctype html>
 <html>
 <head>
-<meta charset="utf-8" />
-<title>ABeam Malaysia — Proposal</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --ink:#0f172a; --sub:#475569; --line:#e2e8f0; --key:#1d4ed8; --muted:#64748b; --bg:#ffffff;
-    --abeam:#0B2F86; /* ABeam brand blue */
-  }
-  *{ box-sizing:border-box; }
+  <meta charset="utf-8" />
+  <title>ABeam Malaysia — Proposal</title>
 
-  body{
-    margin:0;
-    font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
-    color:var(--ink); background:var(--bg);
-    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; text-rendering:optimizeLegibility;
-  }
+  <!-- Mobile & iOS correctness -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no, address=no, email=no" />
+  <meta name="color-scheme" content="light" />
 
-  /* unified page padding + container alignment */
-  .wrap{ padding:40px 48px; }
-  .container{ max-width:1200px; margin:0 auto; }
+  <!-- Inter webfont -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-/* ---- Header (aligned to container) ---- */
-header{ border-bottom:2px solid var(--line); margin-bottom:22px; }
-.header-inner{
-  display:flex; align-items:flex-start; justify-content:space-between;
-  gap:20px; padding:0 0 18px 0;
-}
-/* Center the logo with the text, and make it a touch larger */
-.brand{ display:flex; align-items:center; gap:16px; min-width:0; }
-.brand img{ height:52px; width:auto; }  /* tweak 52 → 56 if you want it bigger */
-.t1{ font-weight:800; letter-spacing:-.01em; font-size:26px; line-height:1.2; margin:0; }
-.t2{ color:var(--sub); font-size:13px; margin-top:4px; }
+  <style>
+    :root{
+      --ink:#0f172a; --sub:#475569; --line:#e2e8f0; --key:#1d4ed8; --muted:#64748b; --bg:#ffffff;
+      --abeam:#0B2F86; /* ABeam brand blue */
+    }
+    *{ box-sizing:border-box; }
 
-  .contacts{ text-align:right; font-size:13px; line-height:1.35; color:var(--ink); max-width:520px; }
-  .contacts .co{ font-weight:700; margin-bottom:4px; }
-  .contacts a{ color:var(--abeam); text-decoration:none; font-weight:600; }
-  .contacts a:hover{ text-decoration:underline; }
+    /* stop iOS/Android auto-inflating text */
+    html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
 
-  /* ===== Hero ===== */
-/* center the content inside the hero bar */
-.hero{
-  background:var(--abeam); color:#fff; border-radius:14px; padding:24px;
-  margin:18px 0 26px;
-  display:flex;
-  justify-content:center;   /* horizontally center */
-  align-items:center;       /* optional: vertical centering */
-}
+    body{
+      margin:0;
+      font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      color:var(--ink); background:var(--bg);
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; text-rendering:optimizeLegibility;
+      /* hide until Inter is ready (prevents mismatched sizes in mobile preview) */
+      visibility: hidden;
+    }
+    body.fonts-ready { visibility: visible; }
 
-.hero-inner{
-  margin:0 auto;            /* remove the previous margin-left:auto */
-  text-align:center;        /* center the text */
-}
-.hero .big{ font-size:30px; font-weight:800; margin:0 0 6px; }
-.hero .sub{ font-size:13px; opacity:.9; }
+    /* unified page padding + container alignment */
+    .wrap{ padding:40px 48px; }
+    .container{ max-width:1200px; margin:0 auto; }
 
-  /* ===== Layout / Cards ===== */
-  h3.section{ font-size:17px; margin:26px 0 10px; font-weight:700; letter-spacing:.01em; }
-  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-  .grid-2-1{ display:grid; grid-template-columns:2fr 1fr; gap:16px; }
-  .grid-3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+    /* ---- Header (aligned to container) ---- */
+    header{ border-bottom:2px solid var(--line); margin-bottom:22px; }
+    .header-inner{
+      display:flex; align-items:flex-start; justify-content:space-between;
+      gap:20px; padding:0 0 18px 0;
+    }
+    /* Center the logo with the text, and make it a touch larger */
+    .brand{ display:flex; align-items:center; gap:16px; min-width:0; }
+    .brand img{ height:52px; width:auto; }  /* tweak 52 → 56 if you want it bigger */
+    .t1{ font-weight:800; letter-spacing:-.01em; font-size:26px; line-height:1.2; margin:0; }
+    .t2{ color:var(--sub); font-size:13px; margin-top:4px; }
 
-  .card{ border:1px solid var(--line); border-radius:12px; padding:14px; background:#fff; }
-  .label{ color:var(--muted); font-size:12px; }
-  .value{ font-weight:600; font-size:14px; }
+    .contacts{ text-align:right; font-size:13px; line-height:1.35; color:var(--ink); max-width:520px; }
+    .contacts .co{ font-weight:700; margin-bottom:4px; }
+    .contacts a{ color:var(--abeam); text-decoration:none; font-weight:600; }
+    .contacts a:hover{ text-decoration:underline; }
 
-  /* ===== Tables ===== */
-  table{ width:100%; border-collapse:collapse; margin-top:10px; }
-  th, td{ padding:10px 12px; border-bottom:1px solid var(--line); font-size:13px; }
-  th{ text-align:left; color:var(--muted); font-weight:600; letter-spacing:.02em; }
-  .right, .text-right{ text-align:right; }
-  .row-discount td{ color:#065f46; background:#ecfdf5; }
-  .strong td, td.strong{ font-weight:800; }
-  .subhead td{ color:var(--muted); font-weight:600; background:#f8fafc; }
-  tfoot td{ border-top:2px solid var(--ink); font-weight:800; }
+    /* ===== Hero ===== */
+    /* center the content inside the hero bar */
+    .hero{
+      background:var(--abeam); color:#fff; border-radius:14px; padding:24px;
+      margin:18px 0 26px;
+      display:flex;
+      justify-content:center;   /* horizontally center */
+      align-items:center;       /* vertical centering */
+    }
+    .hero-inner{
+      margin:0 auto;            /* no right-shift */
+      text-align:center;        /* center the text */
+    }
+    .hero .big{ font-size:30px; font-weight:800; margin:0 0 6px; }
+    .hero .sub{ font-size:13px; opacity:.9; }
 
-  /* ===== Notes / Footer ===== */
-  .note{ margin-top:14px; background:#fffbeb; border:1px solid #f59e0b; color:#92400e; padding:10px 12px; border-radius:10px; font-size:12px; }
-  .foot{ margin-top:28px; padding-top:16px; border-top:1px solid var(--line); color:var(--muted); font-size:12px; }
+    /* ===== Layout / Cards ===== */
+    h3.section{ font-size:17px; margin:26px 0 10px; font-weight:700; letter-spacing:.01em; }
+    .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .grid-2-1{ display:grid; grid-template-columns:2fr 1fr; gap:16px; }
+    .grid-3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
 
-  /* legacy bottom contact block (kept for completeness) */
-  .contact{ margin-top:18px; }
-  .contact .addr{ line-height:1.5; font-size:13px; }
-  .contact a{ color:var(--key); text-decoration:none; }
-  .contact a:hover{ text-decoration:underline; }
+    .card{ border:1px solid var(--line); border-radius:12px; padding:14px; background:#fff; }
+    .label{ color:var(--muted); font-size:12px; }
+    .value{ font-weight:600; font-size:14px; }
 
-  /* ===== Responsive / Print ===== */
-  @media print{
-    .wrap{ padding:24px 28px; }
-    .grid-2, .grid-2-1{ grid-template-columns:1fr 1fr; }
-    .grid-3{ grid-template-columns:1fr 1fr 1fr; }
-  }
-  @media (max-width: 820px){
-    .grid-2, .grid-2-1, .grid-3{ grid-template-columns:1fr; }
-    .contacts{ text-align:left; max-width:none; }
-  }
-</style>
+    /* ===== Tables ===== */
+    table{ width:100%; border-collapse:collapse; margin-top:10px; }
+    th, td{ padding:10px 12px; border-bottom:1px solid var(--line); font-size:13px; }
+    th{ text-align:left; color:var(--muted); font-weight:600; letter-spacing:.02em; }
+    .right, .text-right{ text-align:right; }
+    .row-discount td{ color:#065f46; background:#ecfdf5; }
+    .strong td, td.strong{ font-weight:800; }
+    .subhead td{ color:var(--muted); font-weight:600; background:#f8fafc; }
+    tfoot td{ border-top:2px solid var(--ink); font-weight:800; }
+
+    /* ===== Notes / Footer ===== */
+    .note{ margin-top:14px; background:#fffbeb; border:1px solid #f59e0b; color:#92400e; padding:10px 12px; border-radius:10px; font-size:12px; }
+    .foot{
+      margin-top:28px; padding-top:16px; border-top:1px solid var(--line);
+      text-align:center; color:var(--abeam); font-size:14px; font-weight:800;
+    }
+
+    /* legacy bottom contact block (kept for completeness) */
+    .contact{ margin-top:18px; }
+    .contact .addr{ line-height:1.5; font-size:13px; }
+    .contact a{ color:var(--key); text-decoration:none; }
+    .contact a:hover{ text-decoration:underline; }
+
+    /* ===== Responsive / Print ===== */
+    @media print{
+      .wrap{ padding:24px 28px; }
+      .grid-2, .grid-2-1{ grid-template-columns:1fr 1fr; }
+      .grid-3{ grid-template-columns:1fr 1fr 1fr; }
+    }
+    @media (max-width: 820px){
+      .grid-2, .grid-2-1, .grid-3{ grid-template-columns:1fr; }
+      .contacts{ text-align:left; max-width:none; }
+    }
+  </style>
+
+  <!-- Reveal after Inter loads (prevents mismatched sizes in mobile HTML preview) -->
+  <script>
+    (function () {
+      try {
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(function () {
+            document.body.classList.add('fonts-ready');
+          });
+        } else {
+          setTimeout(function(){ document.body.classList.add('fonts-ready'); }, 300);
+        }
+      } catch(e) {
+        document.body.classList.add('fonts-ready');
+      }
+    })();
+  </script>
 </head>
+
 
 <body>
 <div class="wrap">
