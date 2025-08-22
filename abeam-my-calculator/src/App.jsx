@@ -1599,12 +1599,41 @@ function QuickMode(props) {
                     <span className="text-[14.5px] sm:text-sm">No AMS bundle</span>
                   </div>
                 </label>
-                {selectedAMS && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Range label="AMS Discount" value={amsDiscountPct} setValue={setAmsDiscountPct} min={0} max={25} />
-                    <Field label="AMS Rate (RM/day)" value={amsRate} setValue={setAmsRate} />
-                  </div>
-                )}
+{selectedAMS && (
+  <div className="mt-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+      {/* Slider spans 2 columns like your Commercial card */}
+      <div className="md:col-span-2 min-w-0">
+        <Range
+          label="AMS Discount"
+          value={amsDiscountPct}
+          setValue={setAmsDiscountPct}
+          min={0}
+          max={25}
+        />
+      </div>
+
+      {/* Rate input: same cosmetics, but forced to stay inside the column */}
+      <div className="md:col-span-1 min-w-0">
+        <label className="block text-[14.5px] sm:text-sm text-slate-700 mb-1">
+          AMS Rate (RM/day)
+        </label>
+        <input
+          type="number"
+          value={amsRate}
+          onChange={(e) => setAmsRate(+e.target.value || 0)}
+          inputMode="numeric"
+          className="block w-full h-11 rounded-lg border border-slate-300 px-4 text-right text-base shadow-sm"
+        />
+      </div>
+    </div>
+  </div>
+)}
+
+
+
+
+
               </div>
             </div>
           </div>
@@ -2198,7 +2227,7 @@ function ProMode(props) {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             <div className="flex items-end gap-3">
-              <Toggle checked={allowMandayDiscount} onChange={setAllowMandayDiscount} />
+              
               <Range label="Manday Discount" value={mandayDiscountPct} setValue={setMandayDiscountPct} />
             </div>
             <Range label="Rate Discount" value={rateDiscountPct} setValue={setRateDiscountPct} />
