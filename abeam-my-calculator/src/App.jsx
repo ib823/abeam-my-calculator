@@ -96,7 +96,7 @@ const AMS_CHOICES = [
 ];
 
 /* ============================================
-   Functional Catalog (your provided table) — UNCHANGED
+   Functional Catalog (UNCHANGED)
    ============================================ */
 const SG_CAPS = [
   // ========= FINANCE =========
@@ -409,7 +409,7 @@ const splitSelection = (selectedSet) => {
   const bundleKeys = new Set(bundles.map(b=>b.key));
   const atomic   = selected.filter(c => {
     for (const bk of bundleKeys) {
-      if (isInBundleScope(c, bk)) return false; // covered by bundle
+      if (isInBundleScope(c, bk)) return false;
     }
     return true;
   });
@@ -418,10 +418,10 @@ const splitSelection = (selectedSet) => {
 
 /* ========= Preset seeds ========= */
 const ESSENTIAL_MIN_KEYS = new Set([
-  "fin_master_data_mgt",         // 193
-  "p2p_inv_acct",                // 90
-  "sales_service",               // 77
-  "gl_general_ledger", "aa_asset_acct", "pay_processing", "open_item_mgt" // 0d meta core
+  "fin_master_data_mgt",
+  "p2p_inv_acct",
+  "sales_service",
+  "gl_general_ledger", "aa_asset_acct", "pay_processing", "open_item_mgt"
 ]);
 const STANDARD_EXTRA_KEYS = new Set(["drc_tax","collections","credit"]);
 const PREMIUM_BASE_BUNDLE = "finance_base_424";
@@ -448,8 +448,8 @@ function Card({ title, subtitle, children, footer, className = "" }) {
     <section className={`bg-white border border-slate-200 rounded-2xl shadow-sm ${className}`}>
       {(title || subtitle) && (
         <div className="px-6 pt-5">
-          {title && <h2 className="text-lg font-semibold text-slate-800">{title}</h2>}
-          {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
+          {title && <h2 className="text-[18px] sm:text-lg font-semibold text-slate-800">{title}</h2>}
+          {subtitle && <p className="text-[13.5px] sm:text-sm text-slate-500 mt-0.5">{subtitle}</p>}
         </div>
       )}
       <div className="p-6 pt-4">{children}</div>
@@ -459,7 +459,7 @@ function Card({ title, subtitle, children, footer, className = "" }) {
 }
 function Field({ label, value, setValue, step = "1" }) {
   return (
-    <label className="text-sm w-full">
+    <label className="text-[14.5px] sm:text-sm w-full">
       <span className="block mb-1 text-slate-600">{label}</span>
       <input
         type="number"
@@ -473,7 +473,7 @@ function Field({ label, value, setValue, step = "1" }) {
 }
 function SelectField({ label, value, setValue, options }) {
   return (
-    <label className="text-sm w-full">
+    <label className="text-[14.5px] sm:text-sm w-full">
       <span className="block mb-1 text-slate-600">{label}</span>
       <select
         value={value}
@@ -491,7 +491,7 @@ function SelectField({ label, value, setValue, options }) {
 }
 function Range({ label, value, setValue, min = 0, max = 10 }) {
   return (
-    <label className="text-sm w-full">
+    <label className="text-[14.5px] sm:text-sm w-full">
       <div className="mb-1 flex items-center justify-between text-slate-600">
         <span>{label}</span>
         <span className="font-medium">{value}%</span>
@@ -545,92 +545,254 @@ function ExportButtons({ data, filename, summary }) {
     link.href = url; link.download = `${filename}.json`; link.click();
     URL.revokeObjectURL(url);
   };
-  const exportToPDF = () => {
-    const printWindow = window.open('', '_blank');
-    const logoUrl = `${window.location.origin}/abeam-logo.png`;
-    const htmlContent = `
-      <!DOCTYPE html><html><head><title>ABeam Malaysia SAP Package Proposal</title>
-      <style>
-        body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
-        .header { border-bottom: 3px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; display:flex; align-items:center; gap:12px;}
-        .title { font-size: 28px; font-weight: bold; margin: 10px 0; }
-        .subtitle { color: #666; margin-bottom: 20px; }
-        .section { margin: 25px 0; }
-        .section-title { font-size: 18px; font-weight: bold; color: #2563eb; margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 15px 0; }
-        .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; background: #f9fafb; }
-        .price-box { background: #1e40af; color: white; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; }
-        .price-main { font-size: 32px; font-weight: bold; }
-        .price-sub { font-size: 14px; opacity: 0.9; }
-        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-        th, td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; }
-        th { background: #f3f4f6; font-weight: bold; }
-        .text-right { text-align: right; }
-        .warning { background: #fef3c7; border: 1px solid #f59e0b; padding: 10px; border-radius: 6px; margin: 10px 0; }
-        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #666; }
-        @media print { body { margin: 20px; } }
-      </style></head><body>
-        <div class="header">
-          <img src="${logoUrl}" alt="ABeam Consulting" style="height:40px; width:auto;" />
-          <div>
-            <div class="title">SAP Cloud ERP Implementation Proposal</div>
-            <div class="subtitle">Package: ${summary.tier.toUpperCase()} | Industry: ${summary.industryTemplate} | Generated: ${new Date().toLocaleDateString()}</div>
+const exportToPDF = () => {
+  const printWindow = window.open('', '_blank');
+  const logoUrl = `${window.location.origin}/abeam-logo.png`;
+
+  // helper formatters (consistent, locale-safe)
+  const fmt = (n) => Number(n).toLocaleString();
+  const currency = (n) => `RM ${fmt(n)}`;
+  const totalTopline = summary.includeAMSInTotal
+    ? (summary.projectPrice + summary.amsPrice)
+    : summary.projectPrice;
+
+  const today = new Date();
+  const dateStr = today.toLocaleDateString();
+
+  const htmlContent = `
+  <!doctype html>
+  <html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    <title>ABeam — SAP Cloud ERP Proposal</title>
+
+    <!-- Font: Inter (primary) with system UI fallbacks -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+      :root{
+        --ink: #0b1220;
+        --muted: #5b6370;
+        --line: rgba(10, 20, 30, 0.08);
+        --accent: #1e40af; /* deep indigo */
+        --soft: #f6f8fb;
+      }
+      /* A4 page with generous, print-safe margins */
+      @page { size: A4; margin: 22mm 16mm; }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+        -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+        color: var(--ink);
+        line-height: 1.45;
+        margin: 0;
+      }
+      .wrap { max-width: 740px; margin: 0 auto; }
+      .header{
+        display:flex; align-items:center; gap:14px; padding-bottom:18px; margin-bottom:24px;
+        border-bottom: 1px solid var(--line);
+      }
+      .logo{ height:40px; width:auto; }
+      .eyebrow{ font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+      .title{ font-size:28px; font-weight:700; letter-spacing:-0.01em; margin:4px 0 2px; }
+      .subtitle{ font-size:13px; color:var(--muted); }
+
+      .stats{
+        display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;
+        margin: 18px 0 8px;
+      }
+      .stat{
+        border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+      }
+      .stat .k{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+      .stat .v{ font-size:22px; font-weight:700; margin-top:2px; letter-spacing:-0.01em; }
+
+      .band{
+        margin:18px 0 24px;
+        padding:16px 18px;
+        border:1px solid var(--line);
+        border-radius:12px;
+        background: #fff;
+      }
+      .price{
+        font-size:30px; font-weight:800; letter-spacing:-0.02em;
+      }
+      .price-sub{
+        font-size:12.5px; color:var(--muted); margin-top:4px;
+      }
+
+      h2.section{
+        font-size:16px; font-weight:700; letter-spacing:.0em;
+        margin: 22px 0 10px;
+        padding-left:10px; border-left:3px solid var(--accent);
+      }
+      .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+      .card{
+        border:1px solid var(--line); border-radius:10px; padding:12px 14px; background:#fff;
+      }
+      .kv{ margin:2px 0; }
+      .kv b{ font-weight:600; }
+
+      table{
+        width:100%; border-collapse: collapse; margin: 8px 0 4px;
+        font-size:13px;
+      }
+      th, td { padding:9px 10px; text-align:left; border-bottom:1px solid var(--line); }
+      th { font-weight:600; color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+      td.num { text-align:right; white-space:nowrap; }
+      tr.total-row td{ font-weight:700; }
+      .note { font-size:12.5px; color:var(--muted); }
+      .pill{
+        display:inline-block; font-size:11px; padding:2px 8px; border:1px solid var(--line);
+        border-radius:999px; color:var(--muted); margin-right:6px; margin-bottom:6px;
+      }
+
+      .lists{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+      ul.clean{ margin:0; padding-left:16px; font-size:13px; }
+      ul.clean li{ margin:4px 0; }
+      .warning{
+        border:1px solid rgba(245, 158, 11, .35);
+        background: rgba(254, 243, 199, .35);
+        color:#92400e;
+        padding:10px 12px; border-radius:8px; font-size:13px; margin:8px 0;
+      }
+
+      .footer{
+        margin-top:30px; padding-top:14px; border-top:1px solid var(--line);
+        font-size:11.5px; color:var(--muted);
+      }
+
+      /* print niceties */
+      section, .card, .band, table, .lists { break-inside: avoid; }
+      @media print {
+        a { color: inherit; text-decoration: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+
+      <!-- Header -->
+      <header class="header">
+        <img class="logo" src="${logoUrl}" alt="ABeam Consulting">
+        <div>
+          <div class="eyebrow">ABeam Malaysia</div>
+          <div class="title">SAP Cloud ERP Implementation Proposal</div>
+          <div class="subtitle">Package: ${summary.tier.toUpperCase()} • Industry: ${summary.industryTemplate} • Generated: ${dateStr}</div>
+        </div>
+      </header>
+
+      <!-- Key Figures -->
+      <div class="stats">
+        <div class="stat">
+          <div class="k">Project Price${summary.includeAMSInTotal ? " (incl. AMS)" : ""}</div>
+          <div class="v">${currency(totalTopline)}</div>
+        </div>
+        <div class="stat">
+          <div class="k">Total Mandays</div>
+          <div class="v">${fmt(summary.totalMandays)} d</div>
+        </div>
+        <div class="stat">
+          <div class="k">Estimated Timeline</div>
+          <div class="v">${fmt(summary.timelineWeeks)} wks</div>
+        </div>
+      </div>
+
+      <!-- Executive Summary band -->
+      <div class="band">
+        <div class="price">${currency(totalTopline)}</div>
+        <div class="price-sub">
+          ${fmt(summary.totalMandays)} mandays • ${fmt(summary.timelineWeeks)} weeks (${summary.timelineMonths} months)
+          ${summary.includeAMSInTotal ? " • AMS included" : ""}
+        </div>
+      </div>
+
+      <!-- Executive Summary -->
+      <h2 class="section">Executive Summary</h2>
+      <div class="grid-2">
+        <div class="card">
+          <div class="kv"><b>Implementation Approach</b></div>
+          <div class="kv">Tier: <b>${summary.tier.toUpperCase()}</b></div>
+          <div class="kv">Industry: <b>${summary.industryTemplate}</b></div>
+          <div class="kv">Risk Level: <b>${summary.riskMultiplier.toFixed(2)}×</b></div>
+        </div>
+        <div class="card">
+          <div class="kv"><b>Timeline & Resourcing</b></div>
+          <div class="kv">Duration: <b>${fmt(summary.timelineWeeks)} weeks</b> (${summary.timelineMonths} months)</div>
+          <div class="kv">Team Size: <b>${summary.teamSize} FTE</b></div>
+          <div class="kv">Utilization: <b>${summary.utilization}%</b></div>
+        </div>
+      </div>
+
+      <!-- Effort Breakdown -->
+      <h2 class="section">Effort Breakdown</h2>
+      <table>
+        <thead>
+          <tr><th>Component</th><th class="num">Days</th><th class="num">Cost (RM)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Functional Implementation</td><td class="num">${fmt(summary.functionalDays)}</td><td class="num">${currency(summary.functionalDays * summary.projectRate)}</td></tr>
+          <tr><td>Forms & Interfaces (FRICEW)</td><td class="num">${fmt(summary.fricewDays)}</td><td class="num">${currency(summary.fricewDays * summary.projectRate)}</td></tr>
+          <tr><td>Technical Setup</td><td class="num">${fmt(summary.technicalDays)}</td><td class="num">${currency(summary.technicalDays * summary.projectRate)}</td></tr>
+          <tr><td>Project Delivery Wrapper</td><td class="num">${fmt(summary.wrapperDays)}</td><td class="num">${currency(summary.wrapperDays * summary.projectRate)}</td></tr>
+          <tr class="total-row"><td>Total Implementation</td><td class="num">${fmt(summary.totalMandays)}</td><td class="num">${currency(summary.projectPrice)}</td></tr>
+          ${summary.amsPrice > 0 ? `<tr><td>AMS Bundle (3 years)</td><td class="num">${fmt(summary.amsDays)}</td><td class="num">${currency(summary.amsPrice)}</td></tr>` : ''}
+        </tbody>
+      </table>
+      <div class="note">Rate: ${currency(summary.projectRate)} per manday. Prices rounded as configured in app.</div>
+
+      <!-- Scope Summary -->
+      <h2 class="section">Scope Summary</h2>
+      <div class="lists">
+        <div class="card">
+          <div class="kv"><b>Selected Capabilities</b></div>
+          <div style="margin-top:6px;">
+            ${summary.selectedCapabilities && summary.selectedCapabilities.length
+              ? `<ul class="clean">` + summary.selectedCapabilities.map(x => `<li>${x}</li>`).join("") + `</ul>`
+              : `<span class="note">None selected.</span>`}
           </div>
         </div>
-
-        <div class="price-box">
-          <div class="price-main">RM ${(summary.includeAMSInTotal ? (summary.projectPrice + summary.amsPrice) : summary.projectPrice).toLocaleString()}</div>
-          <div class="price-sub">${summary.totalMandays} mandays | ${summary.timelineWeeks} weeks delivery${summary.includeAMSInTotal ? " • AMS included" : ""}</div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">Executive Summary</div>
-          <div class="grid">
-            <div class="card"><strong>Implementation Approach</strong><br>
-              Tier: ${summary.tier.toUpperCase()}<br>
-              Industry Template: ${summary.industryTemplate}<br>
-              Risk Level: ${summary.riskMultiplier.toFixed(2)}x
-            </div>
-            <div class="card"><strong>Timeline & Resources</strong><br>
-              Duration: ${summary.timelineWeeks} weeks (${summary.timelineMonths} months)<br>
-              Team Size: ${summary.teamSize} FTE<br>
-              Utilization: ${summary.utilization}%
-            </div>
+        <div class="card">
+          <div class="kv"><b>Forms & Interfaces</b></div>
+          <div style="margin-top:6px;">
+            <div class="kv"><span class="pill">Forms</span></div>
+            ${summary.selectedForms && summary.selectedForms.length
+              ? `<ul class="clean" style="margin-top:6px;">` + summary.selectedForms.map(x => `<li>${x}</li>`).join("") + `</ul>`
+              : `<span class="note">No forms selected.</span>`}
+            <div class="kv" style="margin-top:10px;"><span class="pill">Interfaces</span></div>
+            ${summary.selectedInterfaces && summary.selectedInterfaces.length
+              ? `<ul class="clean" style="margin-top:6px;">` + summary.selectedInterfaces.map(x => `<li>${x}</li>`).join("") + `</ul>`
+              : `<span class="note">No interfaces selected.</span>`}
           </div>
         </div>
+      </div>
 
-        <div class="section">
-          <div class="section-title">Effort Breakdown</div>
-          <table class="min-w-full text-sm">
-            <tr><th>Component</th><th class="text-right">Days</th><th class="text-right">Cost (RM)</th></tr>
-            <tr><td>Functional Implementation</td><td class="text-right">${summary.functionalDays}</td><td class="text-right">${(summary.functionalDays * summary.projectRate).toLocaleString()}</td></tr>
-            <tr><td>Forms & Interfaces (FRICEW)</td><td class="text-right">${summary.fricewDays}</td><td class="text-right">${(summary.fricewDays * summary.projectRate).toLocaleString()}</td></tr>
-            <tr><td>Technical Setup</td><td class="text-right">${summary.technicalDays}</td><td class="text-right">${(summary.technicalDays * summary.projectRate).toLocaleString()}</td></tr>
-            <tr><td>Project Delivery Wrapper</td><td class="text-right">${summary.wrapperDays}</td><td class="text-right">${(summary.wrapperDays * summary.projectRate).toLocaleString()}</td></tr>
-            <tr style="font-weight: bold; background: #f3f4f6;"><td>Total Implementation</td><td class="text-right">${summary.totalMandays}</td><td class="text-right">${summary.projectPrice.toLocaleString()}</td></tr>
-            ${summary.amsPrice > 0 ? `<tr><td>AMS Bundle (3 years)</td><td class="text-right">${summary.amsDays}</td><td class="text-right">${summary.amsPrice.toLocaleString()}</td></tr>` : ''}
-          </table>
-        </div>
+      ${summary.warnings && summary.warnings.length ? `
+      <h2 class="section">Project Considerations</h2>
+      ${summary.warnings.map(w => `<div class="warning">⚠️ ${w}</div>`).join("")}
+      ` : ""}
 
-        ${summary.warnings.length ? `
-        <div class="section"><div class="section-title">Project Considerations</div>
-          ${summary.warnings.map(w => `<div class="warning">${w}</div>`).join('')}
-        </div>` : ''}
+      <div class="footer">
+        This document was generated by ABeam Malaysia’s SAP Package Calculator on ${dateStr}.<br/>
+        Final scope & pricing to be confirmed in the Statement of Work.
+      </div>
+    </div>
+  </body>
+  </html>`;
 
-        <div class="footer">
-          <p>This proposal is generated by ABeam Malaysia SAP Package Calculator. Final scope & pricing subject to formal SOW.</p>
-          <p><strong>ABeam Consulting Malaysia</strong> | SAP Cloud ERP Implementation Services | ${new Date().toLocaleString()}</p>
-        </div>
-      </body></html>
-    `;
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    setTimeout(() => printWindow.print(), 500);
-  };
+  printWindow.document.write(htmlContent);
+  printWindow.document.close();
+  setTimeout(() => printWindow.print(), 400);
+};
+
   return (
     <div className="flex flex-col sm:flex-row gap-2">
-      <button onClick={exportToPDF} className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Generate Proposal (PDF)</button>
-      <button onClick={exportToJSON} className="px-3 py-1.5 text-sm bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition">Save Config (JSON)</button>
+      <button onClick={exportToPDF} className="px-3 py-1.5 text-[14.5px] sm:text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Generate Proposal (PDF)</button>
+      <button onClick={exportToJSON} className="px-3 py-1.5 text-[14.5px] sm:text-sm bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition">Save Config (JSON)</button>
     </div>
   );
 }
@@ -650,7 +812,7 @@ export default function App() {
 
   /* Functional */
   const [selectedCaps, setSelectedCaps] = useState(new Set(["fin_master_data_mgt","p2p_inv_acct","sales_service","gl_general_ledger","aa_asset_acct","pay_processing","open_item_mgt"]));
-  const [includeDRC, setIncludeDRC] = useState(false); // UX toggle for DRC
+  const [includeDRC, setIncludeDRC] = useState(false);
   const [myMultipliers, setMyMultipliers] = useState(DEFAULT_MY_MULTIPLIERS);
   const [capDays, setCapDays] = useState(Object.fromEntries(SG_CAPS.map(c => [c.key, c.days || 0])));
 
@@ -698,80 +860,65 @@ export default function App() {
   const [adminOverride, setAdminOverride] = useState(false);
 
   /* QUICK preset override */
-  const [quickPresetOverrideOn, setQuickPresetOverrideOn] = useState(false);
-const [presetOverrides, setPresetOverrides] = useState({
-  essential: null, standard: null, premium: null
-});
-// === Preset editor visibility & toggle for using overrides ===
-const [overridesEnabled, setOverridesEnabled] = useState(true);
-const [overridesOpen, setOverridesOpen] = useState(false);
+  const [quickPresetOverrideOn, setQuickPresetOverrideOn] = useState(true);
+  const [presetOverrides, setPresetOverrides] = useState({ essential: null, standard: null, premium: null });
 
-// helpers that respect your override toggles
-const applyTierQuick = (t) =>
-  applyTier(t, { useOverrides: quickPresetOverrideOn, overrides: presetOverrides });
-
-const applyTierPro = (t) =>
-  applyTier(t, { useOverrides: quickPresetOverrideOn, overrides: presetOverrides });
-// ^ if you have a separate global toggle (e.g., overridesEnabled), use that instead
-
-
-// Optional: persist overrides (paste these two effects anywhere inside App)
-useEffect(() => {
-  const raw = localStorage.getItem("presetOverrides");
-  if (raw) setPresetOverrides(JSON.parse(raw));
-}, []);
-useEffect(() => {
-  localStorage.setItem("presetOverrides", JSON.stringify(presetOverrides));
-}, [presetOverrides]);
-
-// Helper: always apply a tier respecting the toggle
-const applyTierWithOverrides = (t) =>
-  applyTier(t, { useOverrides: overridesEnabled });
+  // Persist overrides
+  useEffect(() => {
+    const raw = localStorage.getItem("presetOverrides");
+    if (raw) setPresetOverrides(JSON.parse(raw));
+  }, []);
+  useEffect(() => {
+    localStorage.setItem("presetOverrides", JSON.stringify(presetOverrides));
+  }, [presetOverrides]);
 
   /* Guided Presets */
-const applyTier = (t, opts = {}) => {
-  const { useOverrides = false, overrides = null } = opts;
-  setTier(t);
+  const applyTier = (t, opts = {}) => {
+    const { useOverrides = false, overrides = null } = opts;
+    setTier(t);
 
-  const o = overrides && overrides[t];
-  if (useOverrides && o && Array.isArray(o.keys)) {
-    setSelectedCaps(new Set(o.keys));
-    setIncludeDRC(!!o.includeDRC);
-    if (o.wrapper) {
-      const w = o.wrapper;
-      if (Number.isFinite(w.security)) setSecurityDays(w.security);
-      if (Number.isFinite(w.tenant))   setTenantOpsDays(w.tenant);
-      if (Number.isFinite(w.migrate))  setMigrationCycles(w.migrate);
-      if (Number.isFinite(w.pmo))      setPmoDays(w.pmo);
-      if (Number.isFinite(w.cutover))  setCutoverDays(w.cutover);
-      if (Number.isFinite(w.training)) setTrainingDays(w.training);
-      if (Number.isFinite(w.hyper))    setHypercareDays(w.hyper);
+    const o = overrides && overrides[t];
+    if (useOverrides && o && Array.isArray(o.keys)) {
+      setSelectedCaps(new Set(o.keys));
+      setIncludeDRC(!!o.includeDRC);
+      if (o.wrapper) {
+        const w = o.wrapper;
+        if (Number.isFinite(w.security)) setSecurityDays(w.security);
+        if (Number.isFinite(w.tenant))   setTenantOpsDays(w.tenant);
+        if (Number.isFinite(w.migrate))  setMigrationCycles(w.migrate);
+        if (Number.isFinite(w.pmo))      setPmoDays(w.pmo);
+        if (Number.isFinite(w.cutover))  setCutoverDays(w.cutover);
+        if (Number.isFinite(w.training)) setTrainingDays(w.training);
+        if (Number.isFinite(w.hyper))    setHypercareDays(w.hyper);
+      }
+      return;
     }
-    return; // stop here if overrides applied
-  }
 
     if (t === "essential") {
       const base = new Set(ESSENTIAL_MIN_KEYS);
-      setIncludeDRC(false); // Optional in Essential
+      setIncludeDRC(false);
       setSelectedCaps(base);
       setSecurityDays(20); setTenantOpsDays(15); setMigrationCycles(2);
       setPmoDays(55); setCutoverDays(12); setTrainingDays(15); setHypercareDays(15);
     }
     if (t === "standard") {
       const std = new Set([...ESSENTIAL_MIN_KEYS, ...STANDARD_EXTRA_KEYS]);
-      setIncludeDRC(true); // default ON
+      setIncludeDRC(true);
       setSelectedCaps(std);
       setSecurityDays(20); setTenantOpsDays(20); setMigrationCycles(3);
       setPmoDays(65); setCutoverDays(15); setTrainingDays(20); setHypercareDays(20);
     }
     if (t === "premium") {
       const p = new Set([PREMIUM_BASE_BUNDLE, ...PREMIUM_EXTRA_KEYS, "drc_tax"]);
-      setIncludeDRC(true); // default ON
+      setIncludeDRC(true);
       setSelectedCaps(p);
       setSecurityDays(25); setTenantOpsDays(25); setMigrationCycles(3);
       setPmoDays(75); setCutoverDays(18); setTrainingDays(25); setHypercareDays(25);
     }
   };
+
+  const applyTierWithOverrides = (t) =>
+    applyTier(t, { useOverrides: quickPresetOverrideOn, overrides: presetOverrides });
 
   const applyIndustryTemplate = (template) => {
     setIndustryTemplate(template);
@@ -792,17 +939,17 @@ const applyTier = (t, opts = {}) => {
     });
   }, [includeDRC]);
 
-  // Apply tier presets when switching to quick (to auto-seed)
-  useEffect(() => { if (mode === "quick") applyTier(tier, {useOverrides: quickPresetOverrideOn, overrides: presetOverrides}); }, [mode, tier]); // eslint-disable-line
-
-  // When overrides change and the toggle is on in Quick mode, re-apply the current tier
-  
+  // Seed when switching to quick
   useEffect(() => {
-    if (mode === "quick" && quickPresetOverrideOn) {
-      applyTier(tier, { useOverrides: true, overrides: presetOverrides });
-    }
-  }, [presetOverrides, quickPresetOverrideOn, mode, tier]); // <- dependencies matter
+    if (mode === "quick")
+      applyTier(tier, { useOverrides: quickPresetOverrideOn, overrides: presetOverrides });
+  }, [mode, tier]); // eslint-disable-line
 
+  // Re-apply if overrides change (while toggle ON)
+  useEffect(() => {
+    if (mode === "quick" && quickPresetOverrideOn)
+      applyTier(tier, { useOverrides: true, overrides: presetOverrides });
+  }, [presetOverrides, quickPresetOverrideOn, mode, tier]);
 
   /* ===== Calculations ===== */
   const sgSelected = useMemo(() => SG_CAPS.filter(c => selectedCaps.has(c.key)), [selectedCaps]);
@@ -835,7 +982,6 @@ const applyTier = (t, opts = {}) => {
     return Math.round(atomicDays + bundleDays + (tpl?.additionalDays ?? 0));
   }, [selectedCaps, myMultipliers, industryTemplate, capDays]);
 
-  // Minimal dependency guard
   const requiresFinance = useMemo(() => {
     if (adminOverride) return false;
     const hasFinance = SG_CAPS.some(c => selectedCaps.has(c.key) && c.function === "Finance");
@@ -945,24 +1091,24 @@ const applyTier = (t, opts = {}) => {
           <div className="flex items-center gap-3 min-w-0">
             <img src="/abeam-logo.png" alt="ABeam Consulting" className="h-7 w-auto" />
             <div className="truncate">
-              <h1 className="text-[15px] sm:text-lg font-semibold tracking-tight text-slate-900 truncate">
+              <h1 className="text-[16px] sm:text-lg font-semibold tracking-tight text-slate-900 truncate">
                 ABeam Malaysia — Cloud ERP Calculator
               </h1>
-              <p className="text-xs text-slate-500 hidden sm:block">Quick estimates for execs. Pro controls for consultants.</p>
+              <p className="text-[12.5px] sm:text-xs text-slate-500 hidden sm:block">Quick estimates for execs. Pro controls for consultants.</p>
             </div>
           </div>
 
           {/* Mode Switch */}
           <div className="flex rounded-full border border-slate-300 p-0.5 bg-slate-100 shrink-0">
             <button
-              className={`px-3 py-1.5 rounded-full text-sm ${mode === "quick" ? "bg-blue-600 text-white" : "text-slate-700 hover:bg-white"}`}
+              className={`px-3 py-1.5 rounded-full text-[14.5px] sm:text-sm ${mode === "quick" ? "bg-blue-600 text-white" : "text-slate-700 hover:bg-white"}`}
               onClick={() => setMode("quick")}
               aria-pressed={mode === "quick"}
             >
               Quick
             </button>
             <button
-              className={`px-3 py-1.5 rounded-full text-sm ${mode === "pro" ? "bg-blue-600 text-white" : "text-slate-700 hover:bg-white"}`}
+              className={`px-3 py-1.5 rounded-full text-[14.5px] sm:text-sm ${mode === "pro" ? "bg-blue-600 text-white" : "text-slate-700 hover:bg-white"}`}
               onClick={() => setMode("pro")}
               aria-pressed={mode === "pro"}
             >
@@ -975,51 +1121,40 @@ const applyTier = (t, opts = {}) => {
       {/* Main */}
       {mode === "quick" ? (
         <QuickMode
-        tier={tier}
-        setTier={setTier}
-
-        industryTemplate={industryTemplate}
-        applyIndustryTemplate={applyIndustryTemplate}
-
-        selectedAMS={selectedAMS}
-        setSelectedAMS={setSelectedAMS}
-        amsDiscountPct={amsDiscountPct}
-        setAmsDiscountPct={setAmsDiscountPct}
-        amsRate={amsRate}
-        setAmsRate={setAmsRate}
-
-        teamSize={teamSize}
-        setTeamSize={setTeamSize}
-        workingDaysPerWeek={workingDaysPerWeek}
-        setWorkingDaysPerWeek={setWorkingDaysPerWeek}
-
-        myProjectPrice={myProjectPrice}
-        myTotalMandays={myTotalMandays}
-        timelineWeeks={timelineWeeks}
-        timelineMonths={timelineMonths}
-
-        exportData={exportData}
-        pdfSummary={pdfSummary}
-
-        amS={amS}
-        includeAMSInTotal={includeAMSInTotal}
-        setIncludeAMSInTotal={setIncludeAMSInTotal}
-
-        quickPresetOverrideOn={quickPresetOverrideOn}
-        setQuickPresetOverrideOn={setQuickPresetOverrideOn}
-        presetOverrides={presetOverrides}
-        setPresetOverrides={setPresetOverrides}
-
-        selectedCaps={selectedCaps}
-        includeDRC={includeDRC}
-        wrapper={{ securityDays, tenantOpsDays, migrationCycles, pmoDays, cutoverDays, trainingDays, hypercareDays }}
-
-        /* ✅ single, clean prop */
-        applyTierWithOverrides={applyTierQuick}
-      />
+          tier={tier}
+          setTier={setTier}
+          industryTemplate={industryTemplate}
+          applyIndustryTemplate={applyIndustryTemplate}
+          selectedAMS={selectedAMS}
+          setSelectedAMS={setSelectedAMS}
+          amsDiscountPct={amsDiscountPct}
+          setAmsDiscountPct={setAmsDiscountPct}
+          amsRate={amsRate}
+          setAmsRate={setAmsRate}
+          teamSize={teamSize}
+          setTeamSize={setTeamSize}
+          workingDaysPerWeek={workingDaysPerWeek}
+          setWorkingDaysPerWeek={setWorkingDaysPerWeek}
+          myProjectPrice={myProjectPrice}
+          myTotalMandays={myTotalMandays}
+          timelineWeeks={timelineWeeks}
+          timelineMonths={timelineMonths}
+          exportData={exportData}
+          pdfSummary={pdfSummary}
+          amS={amS}
+          includeAMSInTotal={includeAMSInTotal}
+          setIncludeAMSInTotal={setIncludeAMSInTotal}
+          quickPresetOverrideOn={quickPresetOverrideOn}
+          setQuickPresetOverrideOn={setQuickPresetOverrideOn}
+          presetOverrides={presetOverrides}
+          setPresetOverrides={setPresetOverrides}
+          selectedCaps={selectedCaps}
+          includeDRC={includeDRC}
+          wrapper={{ securityDays, tenantOpsDays, migrationCycles, pmoDays, cutoverDays, trainingDays, hypercareDays }}
+          applyTierWithOverrides={applyTierWithOverrides}
+        />
       ) : (
         <ProMode
-          // state
           activeLob={activeLob} setActiveLob={setActiveLob}
           capSearch={capSearch} setCapSearch={setCapSearch}
           selectedCaps={selectedCaps} setSelectedCaps={setSelectedCaps}
@@ -1029,7 +1164,6 @@ const applyTier = (t, opts = {}) => {
           capDays={capDays} setCapDays={setCapDays}
           industryTemplate={industryTemplate} applyIndustryTemplate={applyIndustryTemplate}
           tier={tier} applyTier={(t)=>applyTier(t,{useOverrides:false})}
-          // wrapper
           securityDays={securityDays} setSecurityDays={setSecurityDays}
           tenantOpsDays={tenantOpsDays} setTenantOpsDays={setTenantOpsDays}
           migrationCycles={migrationCycles} setMigrationCycles={setMigrationCycles}
@@ -1037,10 +1171,8 @@ const applyTier = (t, opts = {}) => {
           cutoverDays={cutoverDays} setCutoverDays={setCutoverDays}
           trainingDays={trainingDays} setTrainingDays={setTrainingDays}
           hypercareDays={hypercareDays} setHypercareDays={setHypercareDays}
-          // fricew
           selectedForms={selectedForms} setSelectedForms={setSelectedForms}
           selectedIfs={selectedIfs} setSelectedIfs={setSelectedIfs}
-          // commercial
           sgRate={sgRate} setSgRate={setSgRate}
           fx={fx} setFx={setFx}
           myRate={myRate} setMyRate={setMyRate}
@@ -1049,16 +1181,13 @@ const applyTier = (t, opts = {}) => {
           allowMandayDiscount={allowMandayDiscount} setAllowMandayDiscount={setAllowMandayDiscount}
           mandayDiscountPct={mandayDiscountPct} setMandayDiscountPct={setMandayDiscountPct}
           rateDiscountPct={rateDiscountPct} setRateDiscountPct={setRateDiscountPct}
-          // risk
           clientType={clientType} setClientType={setClientType}
           migrationType={migrationType} setMigrationType={setMigrationType}
           timelineType={timelineType} setTimelineType={setTimelineType}
           complexityLevel={complexityLevel} setComplexityLevel={setComplexityLevel}
-          // AMS
           selectedAMS={selectedAMS} setSelectedAMS={setSelectedAMS}
           amsDiscountPct={amsDiscountPct} setAmsDiscountPct={setAmsDiscountPct}
           includeAMSInTotal={includeAMSInTotal} setIncludeAMSInTotal={setIncludeAMSInTotal}
-          // numbers
           sgFunctionalDays={sgFunctionalDays}
           sgFunctionalPriceMYR={Math.round(sgFunctionalPriceMYR)}
           myFunctionalDays={myFunctionalDays}
@@ -1072,7 +1201,7 @@ const applyTier = (t, opts = {}) => {
           warnings={warnings}
           amS={amS}
           exportData={exportData} pdfSummary={pdfSummary}
-          applyTierWithOverrides={applyTierQuick}
+          applyTierWithOverrides={applyTierWithOverrides}
         />
       )}
     </div>
@@ -1100,7 +1229,7 @@ function QuickMode(props) {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Industry */}
             <div className="space-y-2">
-              <div className="text-sm font-medium text-slate-700 mb-1">Industry Template</div>
+              <div className="text-[14.5px] sm:text-sm font-medium text-slate-700 mb-1">Industry Template</div>
               <div className="grid grid-cols-1 gap-2">
                 {Object.entries(INDUSTRY_TEMPLATES).map(([key, template]) => (
                   <button
@@ -1110,8 +1239,8 @@ function QuickMode(props) {
                     }`}
                     onClick={() => applyIndustryTemplate(key)}
                   >
-                    <div className="text-sm font-medium">{template.name}</div>
-                    <div className="text-xs text-slate-500">{template.description}</div>
+                    <div className="text-[14.5px] sm:text-sm font-medium">{template.name}</div>
+                    <div className="text-[12.5px] sm:text-xs text-slate-500">{template.description}</div>
                   </button>
                 ))}
               </div>
@@ -1119,7 +1248,7 @@ function QuickMode(props) {
 
             {/* Tier */}
             <div className="space-y-2">
-              <div className="text-sm font-medium text-slate-700 mb-1">Package Tier</div>
+              <div className="text-[14.5px] sm:text-sm font-medium text-slate-700 mb-1">Package Tier</div>
               <div className="flex flex-col gap-2">
                 {["essential","standard","premium"].map(t => (
                 <button
@@ -1127,10 +1256,10 @@ function QuickMode(props) {
                   className={`px-3 py-2 rounded-lg border transition ${
                     tier === t ? "border-blue-600 bg-blue-50" : "border-slate-300 hover:bg-slate-50"
                   }`}
-                  onClick={() => applyTierWithOverrides(t)}   // <-- use helper
+                  onClick={() => applyTierWithOverrides(t)}
                 >
-                    <div className="text-sm font-medium">{t[0].toUpperCase()+t.slice(1)}</div>
-                    <div className="text-xs text-slate-500">
+                    <div className="text-[14.5px] sm:text-sm font-medium">{t[0].toUpperCase()+t.slice(1)}</div>
+                    <div className="text-[12.5px] sm:text-xs text-slate-500">
                       {t === "essential" && "Minimal core finance (DRC optional)"}
                       {t === "standard" && "Essential + DRC + Collections + Credit"}
                       {t === "premium" && "Finance Base bundle + premium adds"}
@@ -1142,21 +1271,21 @@ function QuickMode(props) {
 
             {/* AMS */}
             <div className="space-y-2">
-              <div className="text-sm font-medium text-slate-700 mb-1">AMS (optional)</div>
+              <div className="text-[14.5px] sm:text-sm font-medium text-slate-700 mb-1">AMS (optional)</div>
               <div className="space-y-2">
                 {AMS_CHOICES.map(a => (
                   <label key={a.key} className={`flex items-center justify-between rounded-lg border p-2 ${selectedAMS === a.key ? "border-blue-600 bg-blue-50" : "border-slate-300 hover:bg-slate-50"}`}>
                     <div className="flex items-center gap-2">
                       <input type="radio" name="ams" checked={selectedAMS === a.key} onChange={() => setSelectedAMS(a.key)} />
-                      <span className="text-sm">{a.label}</span>
+                      <span className="text-[14.5px] sm:text-sm">{a.label}</span>
                     </div>
-                    <span className="text-xs text-slate-500">{a.daysPerYear}d/yr</span>
+                    <span className="text-[12.5px] sm:text-xs text-slate-500">{a.daysPerYear}d/yr</span>
                   </label>
                 ))}
                 <label className={`flex items-center justify-between rounded-lg border p-2 ${!selectedAMS ? "border-blue-600 bg-blue-50" : "border-slate-300 hover:bg-slate-50"}`}>
                   <div className="flex items-center gap-2">
                     <input type="radio" name="ams" checked={!selectedAMS} onChange={() => setSelectedAMS(null)} />
-                                        <span className="text-sm">No AMS bundle</span>
+                    <span className="text-[14.5px] sm:text-sm">No AMS bundle</span>
                   </div>
                 </label>
                 {selectedAMS && (
@@ -1176,46 +1305,39 @@ function QuickMode(props) {
             <Field label="Team Size (FTE)" value={teamSize} setValue={setTeamSize} />
             <Field label="Working Days/Week" value={workingDaysPerWeek} setValue={setWorkingDaysPerWeek} />
             <div className="rounded-lg border border-slate-200 p-3 bg-slate-50">
-              <div className="text-sm text-slate-600">Estimated Timeline</div>
-              <div className="text-lg font-semibold">{timelineWeeks} weeks</div>
-              <div className="text-xs text-slate-600">{timelineMonths} months</div>
+              <div className="text-[14.5px] sm:text-sm text-slate-600">Estimated Timeline</div>
+              <div className="text-[18px] sm:text-lg font-semibold">{timelineWeeks} weeks</div>
+              <div className="text-[12.5px] sm:text-xs text-slate-600">{timelineMonths} months</div>
             </div>
           </div>
         </Card>
 
-        {/* Quick Preset Overrides (Admin) */}
-        
-{/* Tier overrides (Admin) */}
-<Card title="Tier overrides (Admin)">
-  <div className="flex flex-wrap items-center gap-3">
-    <label className="inline-flex items-center gap-2">
-      <Toggle checked={quickPresetOverrideOn} onChange={setQuickPresetOverrideOn} />
-      <span className="text-sm text-slate-700">Enable custom overrides</span>
-    </label>
+        {/* Tier overrides (Admin) */}
+        <Card title="Tier overrides (Admin)">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="inline-flex items-center gap-2">
+              <Toggle checked={quickPresetOverrideOn} onChange={setQuickPresetOverrideOn} />
+              <span className="text-[14.5px] sm:text-sm text-slate-700">Enable custom overrides</span>
+            </label>
+            <span className="text-[12.5px] sm:text-xs text-slate-500">
+              Saved:&nbsp;
+              {Object.entries(presetOverrides)
+                .filter(([,v]) => !!v)
+                .map(([k]) => k)
+                .join(", ") || "None"}
+            </span>
+          </div>
+        </Card>
 
-    <span className="text-xs text-slate-500">
-      Saved:&nbsp;
-      {Object.entries(presetOverrides)
-        .filter(([,v]) => !!v)
-        .map(([k]) => k)
-        .join(", ") || "None"}
-    </span>
-  </div>
-</Card>
-
-{/* Inline editor appears when toggle is ON */}
-{quickPresetOverrideOn && (
-  <PresetOverridesEditor
-    tier={tier}
-    setTier={setTier}
-    presetOverrides={presetOverrides}
-    setPresetOverrides={setPresetOverrides}
-    onApply={() => applyTierWithOverrides(tier)}  // ✅ apply current tier respecting overrides
-  />
-)}
-
-
-
+        {quickPresetOverrideOn && (
+          <PresetOverridesEditor
+            tier={tier}
+            setTier={setTier}
+            presetOverrides={presetOverrides}
+            setPresetOverrides={setPresetOverrides}
+            onApply={() => applyTierWithOverrides(tier)}
+          />
+        )}
       </div>
 
       {/* Summary */}
@@ -1224,19 +1346,19 @@ function QuickMode(props) {
           <Card title="Summary" subtitle="Live preview">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-700">Total Mandays</span>
+                <span className="text-[14.5px] sm:text-sm text-slate-700">Total Mandays</span>
                 <span className="text-base font-semibold"><Num value={myTotalMandays} /> d</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-700">Project Price</span>
-                <span className="text-lg font-bold text-slate-900">RM <Num value={myProjectPrice} /></span>
+                <span className="text-[14.5px] sm:text-sm text-slate-700">Project Price</span>
+                <span className="text-[20px] sm:text-lg font-bold text-slate-900">RM <Num value={myProjectPrice} /></span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-700">AMS (3y)</span>
-                <span className="text-sm font-medium">RM <Num value={amS.price} /> <span className="text-xs text-slate-500">({amS.days} d)</span></span>
+                <span className="text-[14.5px] sm:text-sm text-slate-700">AMS (3y)</span>
+                <span className="text-[14.5px] sm:text-sm font-medium">RM <Num value={amS.price} /> <span className="text-[12.5px] sm:text-xs text-slate-500">({amS.days} d)</span></span>
               </div>
               <label className="flex items-center justify-between rounded-md border border-slate-200 p-2">
-                <span className="text-sm text-slate-700">Include AMS in total</span>
+                <span className="text-[14.5px] sm:text-sm text-slate-700">Include AMS in total</span>
                 <input
                   type="checkbox"
                   className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
@@ -1246,8 +1368,8 @@ function QuickMode(props) {
               </label>
 
               <div className="flex items-center justify-between pt-2 border-t border-slate-200 mt-2">
-                <span className="text-sm text-slate-700">Grand Total</span>
-                <span className="text-lg font-extrabold text-slate-900">
+                <span className="text-[14.5px] sm:text-sm text-slate-700">Grand Total</span>
+                <span className="text-[20px] sm:text-lg font-extrabold text-slate-900">
                   RM <Num value={myProjectPrice + (includeAMSInTotal ? amS.price : 0)} />
                 </span>
               </div>
@@ -1264,14 +1386,14 @@ function QuickMode(props) {
         </div>
       </aside>
 
-      {/* Mobile Sticky Bottom Bar */}
-      <div className="fixed lg:hidden left-0 right-0 bottom-0 z-40 bg-white/95 backdrop-blur border-t border-slate-200 px-4 py-3">
+      {/* Mobile Sticky Bottom Bar with safe-area padding */}
+      <div className="fixed lg:hidden left-0 right-0 bottom-0 z-40 bg-white/95 backdrop-blur border-t border-slate-200 px-4 py-3 pb-[env(safe-area-inset-bottom)]">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-          <div className="text-sm">
+          <div className="text-[14.5px] sm:text-sm">
             <div className="font-semibold">
               RM <Num value={myProjectPrice + (includeAMSInTotal ? amS.price : 0)} />
             </div>
-            <div className="text-xs text-slate-600">
+            <div className="text-[12.5px] sm:text-xs text-slate-600">
               <Num value={myTotalMandays} /> d • {timelineWeeks} wks
               {includeAMSInTotal && <span className="ml-1">• AMS</span>}
             </div>
@@ -1289,7 +1411,7 @@ function QuickMode(props) {
 
 function CompactField({ label, value, setValue, step = "1" }) {
   return (
-    <label className="text-[13px] w-full">
+    <label className="text-[13.5px] sm:text-[13px] w-full">
       <div className="mb-1 text-slate-600">{label}</div>
       <input
         type="number"
@@ -1314,11 +1436,9 @@ function PresetOverridesEditor({
   const [activeLob, setActiveLob] = React.useState("Finance");
   const [q, setQ] = React.useState("");
 
-  // current preset object
   const ov = presetOverrides[activePreset] || { keys: [], includeDRC: false, wrapper: {} };
   const keysSet = React.useMemo(() => new Set(ov.keys || []), [ov.keys]);
 
-  // wrapper local state (safe defaults)
   const w = ov.wrapper || {};
   const [wLocal, setWLocal] = React.useState({
     security: w.security ?? 20,
@@ -1330,7 +1450,6 @@ function PresetOverridesEditor({
     hyper:    w.hyper    ?? 15,
   });
 
-  // refresh wrapper fields when switching preset
   React.useEffect(() => {
     const nw = (presetOverrides[activePreset]?.wrapper) || {};
     setWLocal({
@@ -1344,7 +1463,6 @@ function PresetOverridesEditor({
     });
   }, [activePreset, presetOverrides]);
 
-  // helpers
   const persist = (nextKeysSet, next = {}) => {
     setPresetOverrides(prev => ({
       ...prev,
@@ -1361,7 +1479,6 @@ function PresetOverridesEditor({
     persist(ns);
   };
 
-  // list + selected (scoped by LoB + search)
   const list = React.useMemo(
     () => SG_CAPS.filter(c => (c.function || "Finance") === activeLob && capMatches(c, q)),
     [activeLob, q]
@@ -1371,7 +1488,6 @@ function PresetOverridesEditor({
     [list, keysSet]
   );
 
-  // counts per LoB (for the pills)
   const lobCounts = React.useMemo(() => {
     const counts = { Finance: 0, SCM: 0, HCM: 0, ARIBA: 0, CX: 0 };
     (ov.keys || []).forEach(k => {
@@ -1401,7 +1517,6 @@ function PresetOverridesEditor({
 
   return (
     <Card title="Preset Overrides — Editor" subtitle="Curate bundles for Essential / Standard / Premium.">
-      {/* Top: preset tabs + saved summary */}
       <div className="flex items-center justify-between gap-3 mb-4">
         <div className="flex gap-2">
           {["essential","standard","premium"].map((p) => {
@@ -1409,7 +1524,7 @@ function PresetOverridesEditor({
             return (
               <button
                 key={p}
-                className={`px-4 py-2 rounded-md text-sm font-medium border transition ${
+                className={`px-4 py-2 rounded-md text-[14.5px] sm:text-sm font-medium border transition ${
                   activePreset === p
                     ? "bg-blue-600 text-white border-blue-600"
                     : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
@@ -1422,95 +1537,61 @@ function PresetOverridesEditor({
             );
           })}
         </div>
-        <div className="text-xs text-slate-500">Saved: {savedLabel}</div>
+        <div className="text-[12.5px] sm:text-xs text-slate-500">Saved: {savedLabel}</div>
       </div>
 
-{/* DRC + wrapper (2 rows: 4 + 3) */}
-<div className="border rounded-xl p-4 bg-slate-50 mb-5 space-y-4">
-  <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-    <input
-      type="checkbox"
-      className="h-4 w-4 text-blue-600 border-slate-300 rounded"
-      checked={!!ov.includeDRC}
-      onChange={(e) => persist(undefined, { includeDRC: e.target.checked })}
-    />
-    Include DRC (e-Invoice) in this preset
-  </label>
+      {/* DRC + wrapper */}
+      <div className="border rounded-xl p-4 bg-slate-50 mb-5 space-y-4">
+        <label className="flex items-center gap-2 text-[14.5px] sm:text-sm font-medium text-slate-700">
+          <input
+            type="checkbox"
+            className="h-4 w-4 text-blue-600 border-slate-300 rounded"
+            checked={!!ov.includeDRC}
+            onChange={(e) => persist(undefined, { includeDRC: e.target.checked })}
+          />
+          Include DRC (e-Invoice) in this preset
+        </label>
 
-  {/* Top row: Security, Tenant, Migrate, PMO */}
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-    <CompactField
-      label="Security (d)"
-      value={wLocal.security}
-      setValue={(v) => setWLocal(s => ({ ...s, security: v }))}
-    />
-    <CompactField
-      label="Tenant (d)"
-      value={wLocal.tenant}
-      setValue={(v) => setWLocal(s => ({ ...s, tenant: v }))}
-    />
-    <CompactField
-      label="Migrate (cycles)"
-      value={wLocal.migrate}
-      setValue={(v) => setWLocal(s => ({ ...s, migrate: v }))}
-      step="1"
-    />
-    <CompactField
-      label="PMO (d)"
-      value={wLocal.pmo}
-      setValue={(v) => setWLocal(s => ({ ...s, pmo: v }))}
-    />
-  </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <CompactField label="Security (d)" value={wLocal.security} setValue={(v) => setWLocal(s => ({ ...s, security: v }))} />
+          <CompactField label="Tenant (d)"   value={wLocal.tenant}   setValue={(v) => setWLocal(s => ({ ...s, tenant: v }))} />
+          <CompactField label="Migrate (cycles)" value={wLocal.migrate} setValue={(v) => setWLocal(s => ({ ...s, migrate: v }))} step="1" />
+          <CompactField label="PMO (d)"      value={wLocal.pmo}      setValue={(v) => setWLocal(s => ({ ...s, pmo: v }))} />
+        </div>
 
-  {/* Bottom row: Cutover, Training, Hypercare */}
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-    <CompactField
-      label="Cutover (d)"
-      value={wLocal.cutover}
-      setValue={(v) => setWLocal(s => ({ ...s, cutover: v }))}
-    />
-    <CompactField
-      label="Training (d)"
-      value={wLocal.training}
-      setValue={(v) => setWLocal(s => ({ ...s, training: v }))}
-    />
-    <CompactField
-      label="Hypercare (d)"
-      value={wLocal.hyper}
-      setValue={(v) => setWLocal(s => ({ ...s, hyper: v }))}
-    />
-  </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <CompactField label="Cutover (d)"  value={wLocal.cutover}  setValue={(v) => setWLocal(s => ({ ...s, cutover: v }))} />
+          <CompactField label="Training (d)" value={wLocal.training} setValue={(v) => setWLocal(s => ({ ...s, training: v }))} />
+          <CompactField label="Hypercare (d)"value={wLocal.hyper}    setValue={(v) => setWLocal(s => ({ ...s, hyper: v }))} />
+        </div>
 
-  <div className="flex items-center gap-3">
-    <button
-      className="px-3 py-1.5 text-sm border rounded-md bg-white hover:bg-slate-50"
-      onClick={() => persist(undefined, { wrapper: { ...wLocal } })}
-    >
-      Save wrapper
-    </button>
-    <span className="text-[11px] text-slate-500">
-      Security, Tenant Ops, Migration cycles, PMO, Cutover, Training, Hypercare.
-    </span>
-  </div>
-</div>
+        <div className="flex items-center gap-3">
+          <button
+            className="px-3 py-1.5 text-[14.5px] sm:text-sm border rounded-md bg-white hover:bg-slate-50"
+            onClick={() => persist(undefined, { wrapper: { ...wLocal } })}
+          >
+            Save wrapper
+          </button>
+          <span className="text-[11.5px] sm:text-[11px] text-slate-500">
+            Security, Tenant Ops, Migration cycles, PMO, Cutover, Training, Hypercare.
+          </span>
+        </div>
+      </div>
 
-
-      {/* Body: list & drawer */}
       <div className="grid lg:grid-cols-12 gap-6">
         {/* Left: filters + list */}
         <div className="lg:col-span-8">
-          {/* Tools row */}
           <div className="flex flex-wrap items-center gap-2 mb-3">
             {LOB_ORDER.map((lob) => (
               <button
                 key={lob}
-                className={`px-3 py-1.5 rounded-full text-sm border transition ${
+                className={`px-3 py-1.5 rounded-full text-[14.5px] sm:text-sm border transition ${
                   activeLob === lob ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
                 }`}
                 onClick={() => setActiveLob(lob)}
                 title={lob}
               >
-                {LOB_ICONS[lob]} {lob}{lobCounts[lob] ? ` (${lobCounts[lob]})` : ""}
+                {LOB_ICONS[lob]} {lob}
               </button>
             ))}
 
@@ -1520,20 +1601,19 @@ function PresetOverridesEditor({
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder={`Search ${activeLob}…`}
-                className="w-56 rounded-md border px-2 py-1.5 text-sm"
+                className="w-56 rounded-md border px-2 py-1.5 text-[14.5px] sm:text-sm"
               />
-              <button className="text-sm px-2 py-1 rounded-md border hover:bg-slate-50" onClick={selectAllFiltered}>
+              <button className="text-[14.5px] sm:text-sm px-2 py-1 rounded-md border hover:bg-slate-50" onClick={selectAllFiltered}>
                 Select all in tab
               </button>
-              <button className="text-sm px-2 py-1 rounded-md border hover:bg-slate-50" onClick={clearFiltered}>
+              <button className="text-[14.5px] sm:text-sm px-2 py-1 rounded-md border hover:bg-slate-50" onClick={clearFiltered}>
                 Clear tab
               </button>
             </div>
           </div>
 
-          {/* List */}
           <div className="rounded-xl border bg-white max-h-[460px] overflow-auto">
-            <div className="sticky top-0 z-10 bg-white/95 border-b px-3 py-2 text-[12px] text-slate-500">
+            <div className="sticky top-0 z-10 bg-white/95 border-b px-3 py-2 text-[12.5px] sm:text-[12px] text-slate-500">
               {list.length} items • {selectedInView.length} selected here
             </div>
             {list.map((c) => (
@@ -1545,9 +1625,9 @@ function PresetOverridesEditor({
                     onChange={() => toggleCap(c.key)}
                     className="h-4 w-4 text-blue-600 border-slate-300 rounded"
                   />
-                  <span className="text-sm">{c.label}</span>
+                  <span className="text-[14.5px] sm:text-sm">{c.label}</span>
                 </div>
-                <span className="text-[11px] font-medium text-slate-600">{c.days ?? 0}d</span>
+                <span className="text-[11.5px] sm:text-[11px] font-medium text-slate-600">{c.days ?? 0}d</span>
               </label>
             ))}
           </div>
@@ -1557,15 +1637,15 @@ function PresetOverridesEditor({
         <div className="lg:col-span-4">
           <div className="bg-slate-50 border rounded-xl p-3 h-full flex flex-col">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-semibold text-slate-800">Selected in {activeLob}</h3>
-              <span className="text-xs text-slate-500">{selectedInView.length}</span>
+              <h3 className="text-[14.5px] sm:text-sm font-semibold text-slate-800">Selected in {activeLob}</h3>
+              <span className="text-[12.5px] sm:text-xs text-slate-500">{selectedInView.length}</span>
             </div>
             <div className="flex-1 overflow-auto space-y-1 pr-1">
               {selectedInView.length === 0 ? (
-                <div className="text-xs text-slate-500">None selected.</div>
+                <div className="text-[12.5px] sm:text-xs text-slate-500">None selected.</div>
               ) : (
                 selectedInView.map((c) => (
-                  <div key={c.key} className="flex items-center justify-between bg-white border rounded-md px-2 py-1.5 text-xs">
+                  <div key={c.key} className="flex items-center justify-between bg-white border rounded-md px-2 py-1.5 text-[12.5px] sm:text-xs">
                     <span className="truncate">{c.label}</span>
                     <button className="text-[11px] text-red-600 hover:underline" onClick={() => toggleCap(c.key)}>
                       ✕
@@ -1578,16 +1658,15 @@ function PresetOverridesEditor({
         </div>
       </div>
 
-      {/* Footer actions */}
       <div className="mt-5 flex flex-col sm:flex-row items-center justify-end gap-2">
         <button
-          className="px-4 py-2 text-sm border rounded-md"
-          onClick={() => persist(undefined)} // ensure latest local keys are saved
+          className="px-4 py-2 text-[14.5px] sm:text-sm border rounded-md"
+          onClick={() => persist(undefined)}
         >
           Save preset for {activePreset[0].toUpperCase() + activePreset.slice(1)}
         </button>
         <button
-          className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          className="px-4 py-2 text-[14.5px] sm:text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
           onClick={onApply}
           title={`Apply ${tier.toUpperCase()} now (using overrides if enabled)`}
         >
@@ -1598,9 +1677,7 @@ function PresetOverridesEditor({
   );
 }
 
-
-
-/* =============== Pro Mode (mobile-first, minimal) =============== */
+/* =============== Pro Mode (mobile-first) =============== */
 function ProMode(props) {
   const {
     // state
@@ -1613,7 +1690,6 @@ function ProMode(props) {
     capDays, setCapDays,
     industryTemplate, applyIndustryTemplate,
     tier, applyTier,
-
     // wrapper
     securityDays, setSecurityDays,
     tenantOpsDays, setTenantOpsDays,
@@ -1622,11 +1698,9 @@ function ProMode(props) {
     cutoverDays, setCutoverDays,
     trainingDays, setTrainingDays,
     hypercareDays, setHypercareDays,
-
     // FRICEW
     selectedForms, setSelectedForms,
     selectedIfs, setSelectedIfs,
-
     // commercial
     sgRate, setSgRate,
     fx, setFx,
@@ -1636,18 +1710,15 @@ function ProMode(props) {
     allowMandayDiscount, setAllowMandayDiscount,
     mandayDiscountPct, setMandayDiscountPct,
     rateDiscountPct, setRateDiscountPct,
-
     // risk
     clientType, setClientType,
     migrationType, setMigrationType,
     timelineType, setTimelineType,
     complexityLevel, setComplexityLevel,
-
     // AMS
     selectedAMS, setSelectedAMS,
     amsDiscountPct, setAmsDiscountPct,
     includeAMSInTotal, setIncludeAMSInTotal,
-
     // numbers
     sgFunctionalDays,
     sgFunctionalPriceMYR,
@@ -1662,8 +1733,6 @@ function ProMode(props) {
     warnings,
     amS,
     exportData, pdfSummary,
-
-    // 👇 THIS WAS MISSING — needed by the Tier buttons
     applyTierWithOverrides,
   } = props;
 
@@ -1682,8 +1751,8 @@ function ProMode(props) {
                     className={`px-3 py-2 rounded-lg border text-left transition ${industryTemplate === key ? "border-blue-600 bg-blue-50" : "border-slate-300 hover:bg-slate-50"}`}
                     onClick={() => applyIndustryTemplate(key)}
                   >
-                    <div className="text-sm font-medium">{template.name}</div>
-                    <div className="text-xs text-slate-500">{template.description}</div>
+                    <div className="text-[14.5px] sm:text-sm font-medium">{template.name}</div>
+                    <div className="text-[12.5px] sm:text-xs text-slate-500">{template.description}</div>
                   </button>
                 ))}
               </div>
@@ -1698,11 +1767,11 @@ function ProMode(props) {
                 className={`px-3 py-2 rounded-lg border transition ${tier === t ? "border-blue-600 bg-blue-50" : "border-slate-300 hover:bg-slate-50"}`}
                 onClick={() => applyTierWithOverrides(t)}
               >
-                {t[0].toUpperCase()+t.slice(1)}
+                <span className="text-[14.5px] sm:text-sm">{t[0].toUpperCase()+t.slice(1)}</span>
               </button>
               ))}
             </div>
-              <div className="text-xs text-slate-500">
+              <div className="text-[12.5px] sm:text-xs text-slate-500">
                 DRC: <strong>{tier==="essential" ? "Optional" : "Included"}</strong>
               </div>
             </div>
@@ -1717,7 +1786,7 @@ function ProMode(props) {
             <SelectField label="Timeline Pressure" value={timelineType} setValue={setTimelineType} options={Object.keys(RISK_FACTORS.timeline)} />
             <SelectField label="Complexity" value={complexityLevel} setValue={setComplexityLevel} options={Object.keys(RISK_FACTORS.complexity)} />
           </div>
-          <div className="mt-3 p-3 bg-slate-50 rounded-lg text-sm text-slate-600">
+          <div className="mt-3 p-3 bg-slate-50 rounded-lg text-[14.5px] sm:text-sm text-slate-600">
             Risk Multiplier: <span className="font-medium">{riskMultiplier.toFixed(2)}x</span>
             {riskMultiplier > 1.2 && <span className="text-amber-600 ml-2">⚠️ High Risk</span>}
           </div>
@@ -1741,7 +1810,7 @@ function ProMode(props) {
             <Field label="Security & Authorization (d)" value={securityDays} setValue={setSecurityDays} />
             <Field label="Tenant Ops (d)" value={tenantOpsDays} setValue={setTenantOpsDays} />
             <Field label="Migration Cycles" value={migrationCycles} setValue={setMigrationCycles} />
-            <div className="text-xs text-slate-500 flex items-end">x{TECH.migrationPerCycle}d per cycle</div>
+            <div className="text-[12.5px] sm:text-xs text-slate-500 flex items-end">x{TECH.migrationPerCycle}d per cycle</div>
           </div>
           <div className="grid md:grid-cols-4 gap-4 mt-4">
             <Field label="PMO & QA (d)" value={pmoDays} setValue={setPmoDays} />
@@ -1755,7 +1824,7 @@ function ProMode(props) {
         <Card title="Forms & Interfaces (FRICEW)" subtitle="Keep the essentials. Add only what matters.">
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <div className="text-sm font-medium mb-2">Forms</div>
+              <div className="text-[14.5px] sm:text-sm font-medium mb-2">Forms</div>
               <div className="space-y-2">
                 {FORMS.map(f => {
                   const checked = selectedForms.has(f.key);
@@ -1772,16 +1841,16 @@ function ProMode(props) {
                             setSelectedForms(ns);
                           }}
                         />
-                        <span className="text-sm">{f.label}</span>
+                        <span className="text-[14.5px] sm:text-sm">{f.label}</span>
                       </div>
-                      <span className="text-xs text-slate-500">{f.days}d</span>
+                      <span className="text-[12.5px] sm:text-xs text-slate-500">{f.days}d</span>
                     </label>
                   );
                 })}
               </div>
             </div>
             <div>
-              <div className="text-sm font-medium mb-2">Interfaces</div>
+              <div className="text-[14.5px] sm:text-sm font-medium mb-2">Interfaces</div>
               <div className="space-y-2">
                 {INTERFACES.map(i => {
                   const checked = selectedIfs.has(i.key);
@@ -1798,9 +1867,9 @@ function ProMode(props) {
                             setSelectedIfs(ns);
                           }}
                         />
-                        <span className="text-sm">{i.label}</span>
+                        <span className="text-[14.5px] sm:text-sm">{i.label}</span>
                       </div>
-                      <span className="text-xs text-slate-500">{i.days}d</span>
+                      <span className="text-[12.5px] sm:text-xs text-slate-500">{i.days}d</span>
                     </label>
                   );
                 })}
@@ -1836,15 +1905,15 @@ function ProMode(props) {
                 <label key={a.key} className="flex items-center justify-between rounded-lg border border-slate-200 p-2.5 hover:bg-slate-50">
                   <div className="flex items-center gap-3">
                     <input type="radio" name="ams" className="h-4 w-4" checked={selectedAMS === a.key} onChange={() => setSelectedAMS(a.key)} />
-                    <span className="text-sm text-slate-800">{a.label}</span>
+                    <span className="text-[14.5px] sm:text-sm text-slate-800">{a.label}</span>
                   </div>
-                  <span className="text-xs text-slate-500">{a.daysPerYear}d/yr</span>
+                  <span className="text-[12.5px] sm:text-xs text-slate-500">{a.daysPerYear}d/yr</span>
                 </label>
               ))}
               <label className="flex items-center justify-between rounded-lg border border-slate-200 p-2.5 hover:bg-slate-50">
                 <div className="flex items-center gap-3">
                   <input type="radio" name="ams" className="h-4 w-4" checked={!selectedAMS} onChange={() => setSelectedAMS(null)} />
-                  <span className="text-sm text-slate-800">No AMS bundle</span>
+                  <span className="text-[14.5px] sm:text-sm text-slate-800">No AMS bundle</span>
                 </div>
               </label>
             </div>
@@ -1852,7 +1921,7 @@ function ProMode(props) {
             <div className="space-y-3">
               <Range label="AMS Discount" value={amsDiscountPct} setValue={setAmsDiscountPct} min={0} max={25} />
               <label className="flex items-center justify-between rounded-md border border-slate-200 p-2">
-                <span className="text-sm text-slate-700">Include AMS in total</span>
+                <span className="text-[14.5px] sm:text-sm text-slate-700">Include AMS in total</span>
                 <input
                   type="checkbox"
                   className="h-4 w-4"
@@ -1860,9 +1929,9 @@ function ProMode(props) {
                   onChange={(e) => setIncludeAMSInTotal(e.target.checked)}
                 />
               </label>
-              <div className="text-sm text-slate-700">
+              <div className="text-[14.5px] sm:text-sm text-slate-700">
                 AMS Price: <span className="font-semibold">RM <Num value={amS.price} /></span>
-                <span className="text-xs text-slate-500"> ({amS.days} d)</span>
+                <span className="text-[12.5px] sm:text-xs text-slate-500"> ({amS.days} d)</span>
               </div>
             </div>
           </div>
@@ -1871,7 +1940,7 @@ function ProMode(props) {
         {/* Warnings */}
         {warnings.length > 0 && (
           <Card title="Project Considerations">
-            <ul className="list-disc pl-6 text-sm text-amber-700 space-y-1">
+            <ul className="list-disc pl-6 text-[14.5px] sm:text-sm text-amber-700 space-y-1">
               {warnings.map((w, i) => <li key={i}>{w}</li>)}
             </ul>
           </Card>
@@ -1884,43 +1953,43 @@ function ProMode(props) {
           <Card title="Numbers" subtitle="Live totals">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-700">Functional (MY)</span>
-                <span className="text-sm font-medium"><Num value={myFunctionalDays} /> d</span>
+                <span className="text-[14.5px] sm:text-sm text-slate-700">Functional (MY)</span>
+                <span className="text-[14.5px] sm:text-sm font-medium"><Num value={myFunctionalDays} /> d</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-700">FRICEW</span>
-                <span className="text-sm font-medium"><Num value={formsDays + ifDays} /> d</span>
+                <span className="text-[14.5px] sm:text-sm text-slate-700">FRICEW</span>
+                <span className="text-[14.5px] sm:text-sm font-medium"><Num value={formsDays + ifDays} /> d</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-700">Technical</span>
-                <span className="text-sm font-medium"><Num value={technicalDays} /> d</span>
+                <span className="text-[14.5px] sm:text-sm text-slate-700">Technical</span>
+                <span className="text-[14.5px] sm:text-sm font-medium"><Num value={technicalDays} /> d</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-700">Wrapper</span>
-                <span className="text-sm font-medium"><Num value={wrapperDays} /> d</span>
+                <span className="text-[14.5px] sm:text-sm text-slate-700">Wrapper</span>
+                <span className="text-[14.5px] sm:text-sm font-medium"><Num value={wrapperDays} /> d</span>
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-slate-200">
-                <span className="text-sm text-slate-700">Total Mandays</span>
+                <span className="text-[14.5px] sm:text-sm text-slate-700">Total Mandays</span>
                 <span className="text-base font-semibold"><Num value={myTotalMandays} /> d</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-700">Project Price</span>
-                <span className="text-lg font-bold text-slate-900">RM <Num value={myProjectPrice} /></span>
+                <span className="text-[14.5px] sm:text-sm text-slate-700">Project Price</span>
+                <span className="text-[20px] sm:text-lg font-bold text-slate-900">RM <Num value={myProjectPrice} /></span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-700">AMS (3y)</span>
-                <span className="text-sm font-medium">RM <Num value={amS.price} /> <span className="text-xs text-slate-500">({amS.days} d)</span></span>
+                <span className="text-[14.5px] sm:text-sm text-slate-700">AMS (3y)</span>
+                <span className="text-[14.5px] sm:text-sm font-medium">RM <Num value={amS.price} /> <span className="text-[12.5px] sm:text-xs text-slate-500">({amS.days} d)</span></span>
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-slate-200">
-                <span className="text-sm text-slate-700">Grand Total</span>
-                <span className="text-lg font-extrabold text-slate-900">
+                <span className="text-[14.5px] sm:text-sm text-slate-700">Grand Total</span>
+                <span className="text-[20px] sm:text-lg font-extrabold text-slate-900">
                   RM <Num value={myProjectPrice + (includeAMSInTotal ? amS.price : 0)} />
                 </span>
               </div>
-              <div className="text-xs text-slate-500">
+              <div className="text-[12.5px] sm:text-xs text-slate-500">
                 SG ref: <Num value={sgFunctionalDays} /> d • RM <Num value={sgFunctionalPriceMYR} />
               </div>
-              <div className="text-xs text-slate-500">Timeline: {timelineWeeks} wks ({timelineMonths} mo)</div>
+              <div className="text-[12.5px] sm:text-xs text-slate-500">Timeline: {timelineWeeks} wks ({timelineMonths} mo)</div>
             </div>
             <div className="mt-4">
               <ExportButtons
@@ -1990,7 +2059,7 @@ function FunctionalCapabilitiesCard({
     <button
       type="button"
       onClick={onClick}
-      className="text-xs px-2 py-1 rounded-full border border-slate-300 hover:bg-slate-50"
+      className="text-[12.5px] sm:text-xs px-2 py-1 rounded-full border border-slate-300 hover:bg-slate-50"
     >
       {label}
     </button>
@@ -2001,19 +2070,19 @@ function FunctionalCapabilitiesCard({
       title="Functional Capabilities"
       subtitle="Lightweight picker with clear alignment. 0-day rows are covered by bundles."
       footer={
-        <div className="text-[11px] text-slate-500">
+        <div className="text-[11.5px] sm:text-[11px] text-slate-500">
           DRC: <strong>{tier==="essential" ? "Optional" : "Included"}</strong>. “Select all / Clear” applies to current filters only.
         </div>
       }
     >
-      {/* Toolbar: Tabs • Search • Toggles */}
+      {/* Toolbar */}
       <div className="relative z-0 flex flex-wrap gap-3 items-stretch mb-4">
-        {/* Tabs (scrollable, never underlap) */}
+        {/* Tabs */}
         <div className="flex overflow-x-auto no-scrollbar gap-2 pr-1 shrink-0">
           {LOB_ORDER.map((lob) => (
             <button
               key={lob}
-              className={`px-3 py-1.5 rounded-full text-sm border whitespace-nowrap transition ${activeLob === lob ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"}`}
+              className={`px-3 py-1.5 rounded-full text-[14.5px] sm:text-sm border whitespace-nowrap transition ${activeLob === lob ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"}`}
               onClick={() => setActiveLob(lob)}
               title={lob}
             >
@@ -2022,7 +2091,7 @@ function FunctionalCapabilitiesCard({
           ))}
         </div>
 
-        {/* Search (expands, keeps min width) */}
+        {/* Search */}
         <div className="flex-1 min-w-[280px]">
           <div className="flex gap-2">
             <input
@@ -2030,11 +2099,11 @@ function FunctionalCapabilitiesCard({
               value={capSearch}
               onChange={(e) => setCapSearch(e.target.value)}
               placeholder={`Search ${activeLob}…`}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-[14.5px] sm:text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             />
             {capSearch && (
               <button
-                className="text-sm px-2 rounded-md border border-slate-300 hover:bg-slate-50"
+                className="text-[14.5px] sm:text-sm px-2 rounded-md border border-slate-300 hover:bg-slate-50"
                 onClick={() => setCapSearch("")}
               >
                 Clear
@@ -2043,9 +2112,9 @@ function FunctionalCapabilitiesCard({
           </div>
         </div>
 
-        {/* Toggles (inside card, no overflow) */}
+        {/* Toggles */}
         <div className="flex items-center gap-4 shrink-0">
-          <label className="inline-flex items-center gap-2 text-sm text-slate-700 whitespace-nowrap">
+          <label className="inline-flex items-center gap-2 text-[14.5px] sm:text-sm text-slate-700 whitespace-nowrap">
             <input
               type="checkbox"
               className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
@@ -2053,19 +2122,19 @@ function FunctionalCapabilitiesCard({
               onChange={(e) => setIncludeDRC(e.target.checked)}
             />
             <span>DRC (e-Invoice)</span>
-            <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${tier==="essential" ? "bg-slate-200 text-slate-700" : "bg-green-600 text-white"}`}>
+            <span className={`text-[11.5px] sm:text-[11px] px-1.5 py-0.5 rounded-full ${tier==="essential" ? "bg-slate-200 text-slate-700" : "bg-green-600 text-white"}`}>
               {tier==="essential" ? "Optional" : "Included"}
             </span>
           </label>
 
-          <label className="inline-flex items-center gap-2 text-sm text-slate-700 whitespace-nowrap">
+          <label className="inline-flex items-center gap-2 text-[14.5px] sm:text-sm text-slate-700 whitespace-nowrap">
             <Toggle checked={adminOverride} onChange={setAdminOverride} />
             <span>Admin Override</span>
           </label>
         </div>
       </div>
 
-      {/* Quick sets + inline counts */}
+      {/* Quick sets + counts */}
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <div className="flex flex-wrap gap-2">
           <QuickSetChip label="Pin Finance Core" onClick={pinFinanceCore} />
@@ -2073,7 +2142,7 @@ function FunctionalCapabilitiesCard({
           <QuickSetChip label="Clear (filtered)" onClick={clearAllFiltered} />
           <QuickSetChip label="Reset MY multipliers" onClick={() => setMyMultipliers(DEFAULT_MY_MULTIPLIERS)} />
         </div>
-        <div className="text-xs text-slate-600">
+        <div className="text-[12.5px] sm:text-xs text-slate-600">
           In view: <strong>{filteredCaps.length}</strong> • Selected here: <strong>{selectedInView.length}</strong>
         </div>
       </div>
@@ -2092,22 +2161,19 @@ function FunctionalCapabilitiesCard({
 
                 return (
                   <details key={c.key} className={`group ${checked ? "bg-blue-50/50" : ""}`}>
-                    {/* Row (always visible) */}
+                    {/* Row */}
                     <summary className="list-none cursor-pointer px-3 py-2.5">
                       <div className={`grid grid-cols-[20px,1fr,auto] items-center gap-3 rounded-lg ${checked ? "border border-blue-400 bg-white/80" : ""} px-2 py-1.5`}>
                         <input
                           type="checkbox"
                           className="h-4 w-4 mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                           checked={checked}
-                          onChange={(e) => {
-                            e.preventDefault(); // keep summary from toggling when checkbox toggles
-                            toggleCap(c.key);
-                          }}
+                          onChange={(e) => { e.preventDefault(); toggleCap(c.key); }}
                           onClick={(e)=>e.stopPropagation()}
                         />
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-slate-900 font-medium break-words">{c.label}</span>
+                            <span className="text-[14.5px] sm:text-sm text-slate-900 font-medium break-words">{c.label}</span>
                             {isBundleRow && <Badge>Bundle</Badge>}
                             {isDRCRow && (
                               <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${tier==="essential" ? "bg-slate-200 text-slate-700" : "bg-green-600 text-white"}`}>
@@ -2115,10 +2181,10 @@ function FunctionalCapabilitiesCard({
                               </span>
                             )}
                           </div>
-                          <div className="text-[11px] text-slate-500 truncate">{c.product} • {c.package}</div>
+                          <div className="text-[11.5px] sm:text-[11px] text-slate-500 truncate">{c.product} • {c.package}</div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="text-[11px] font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-full px-2 py-0.5">
+                          <span className="text-[11.5px] sm:text-[11px] font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-full px-2 py-0.5">
                             {Number(days)}d
                           </span>
                           <span className="text-slate-400 text-xs transition group-open:rotate-180">▾</span>
@@ -2126,10 +2192,10 @@ function FunctionalCapabilitiesCard({
                       </div>
                     </summary>
 
-                    {/* Expand (only when needed) */}
+                    {/* Expand */}
                     <div className="px-5 pb-3">
                       <div className="mt-2 grid grid-cols-1 sm:grid-cols-[64px,110px,1fr] gap-3">
-                        {/* Base days (compact, number only) */}
+                        {/* Base days (number only) */}
                         <div className="flex items-center justify-end rounded-md border border-slate-200 bg-slate-50 px-2 py-1">
                           {adminOverride ? (
                             <input
@@ -2139,16 +2205,16 @@ function FunctionalCapabilitiesCard({
                               onChange={(e) =>
                                 setCapDays((prev) => ({ ...prev, [c.key]: Math.max(0, +e.target.value || 0) }))
                               }
-                              className="w-14 text-right rounded border border-slate-300 px-1 py-0.5 text-xs focus:border-blue-500 focus:ring-blue-500"
+                              className="w-14 text-right rounded border border-slate-300 px-1 py-0.5 text-[12.5px] sm:text-xs focus:border-blue-500 focus:ring-blue-500"
                             />
                           ) : (
-                            <span className="text-xs text-slate-700">{capDays[c.key] ?? c.days ?? 0}d</span>
+                            <span className="text-[12.5px] sm:text-xs text-slate-700">{capDays[c.key] ?? c.days ?? 0}d</span>
                           )}
                         </div>
 
-                        {/* MY multiplier (compact) */}
+                        {/* MY multiplier */}
                         <div className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-2 py-1">
-                          <span className="text-[11px] text-slate-600 mr-2">MY</span>
+                          <span className="text-[11.5px] sm:text-[11px] text-slate-600 mr-2">MY</span>
                           <input
                             type="number"
                             step="0.05"
@@ -2157,12 +2223,12 @@ function FunctionalCapabilitiesCard({
                               const v = parseFloat(e.target.value);
                               setMyMultipliers({ ...myMultipliers, [c.key]: Number.isFinite(v) ? v : 1 });
                             }}
-                            className="w-16 text-right rounded border border-slate-300 px-1 py-0.5 text-xs focus:border-blue-500 focus:ring-blue-500"
+                            className="w-16 text-right rounded border border-slate-300 px-1 py-0.5 text-[12.5px] sm:text-xs focus:border-blue-500 focus:ring-blue-500"
                           />
                         </div>
 
-                        {/* Status hint (fills row) */}
-                        <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-600">
+                        {/* Status hint */}
+                        <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[12.5px] sm:text-xs text-slate-600">
                           {isBundleRow ? "Included bundle – atomic items in same scope auto-covered." : "Atomic item."}
                         </div>
                       </div>
@@ -2178,10 +2244,10 @@ function FunctionalCapabilitiesCard({
         <div className="lg:col-span-4">
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sticky top-24">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-semibold text-slate-800">Selected in {activeLob}</h3>
+              <h3 className="text-[14.5px] sm:text-sm font-semibold text-slate-800">Selected in {activeLob}</h3>
               <button
                 type="button"
-                className="text-xs text-blue-700 hover:underline"
+                className="text-[12.5px] sm:text-xs text-blue-700 hover:underline"
                 onClick={clearAllFiltered}
                 title="Clear selected in current view"
               >
@@ -2190,13 +2256,13 @@ function FunctionalCapabilitiesCard({
             </div>
             <div className="max-h-[260px] overflow-auto space-y-1 pr-1">
               {selectedInView.length === 0 ? (
-                <div className="text-xs text-slate-500">Nothing selected in this tab.</div>
+                <div className="text-[12.5px] sm:text-xs text-slate-500">Nothing selected in this tab.</div>
               ) : (
                 selectedInView.map(c => (
                   <div key={c.key} className="flex items-center justify-between bg-white border border-slate-200 rounded-md px-2 py-1.5">
-                    <span className="text-xs text-slate-700 break-words mr-2">{c.label}</span>
+                    <span className="text-[12.5px] sm:text-xs text-slate-700 break-words mr-2">{c.label}</span>
                     <button
-                      className="text-[11px] text-slate-500 hover:text-red-600"
+                      className="text-[11.5px] sm:text-[11px] text-slate-500 hover:text-red-600"
                       onClick={() => toggleCap(c.key)}
                       title="Remove"
                     >
@@ -2206,7 +2272,7 @@ function FunctionalCapabilitiesCard({
                 ))
               )}
             </div>
-            <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
+            <div className="mt-3 flex items-center justify-between text-[12.5px] sm:text-xs text-slate-600">
               <span>Total in view</span>
               <span className="font-medium">{selectedInView.length}</span>
             </div>
