@@ -1655,25 +1655,7 @@ function QuickMode(props) {
         </div>
       </aside>
 
-      {/* Mobile Sticky Bottom Bar with safe-area padding */}
-      <div className="fixed lg:hidden left-0 right-0 bottom-0 z-40 bg-white/95 backdrop-blur border-t border-slate-200 px-4 py-3 pb-[env(safe-area-inset-bottom)]">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-          <div className="text-[14.5px] sm:text-sm">
-            <div className="font-semibold">
-              RM <Num value={myProjectPrice + (includeAMSInTotal ? amS.price : 0)} />
-            </div>
-            <div className="text-[12.5px] sm:text-xs text-slate-600">
-              <Num value={myTotalMandays} /> d • {timelineWeeks} wks
-              {includeAMSInTotal && <span className="ml-1">• AMS</span>}
-            </div>
-          </div>
-          <ExportButtons
-            data={exportData}
-            filename={`abeam-quick-${new Date().toISOString().split('T')[0]}`}
-            summary={pdfSummary}
-          />
-        </div>
-      </div>
+
     </main>
   );
 }
