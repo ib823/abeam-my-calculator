@@ -9,6 +9,17 @@ const MAX_RATE_DISCOUNT   = 10; // %
 const DEFAULT_ROUNDING    = 1;  // RM1 granularity
 const roundTo = (n, step = 1) => Math.round((+n || 0) / step) * step;
 
+const formatDateTime = (d = new Date()) => {
+  const dd  = String(d.getDate()).padStart(2, "0");
+  const mmm = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()];
+  const yyyy = d.getFullYear();
+  let hh = d.getHours();
+  const ampm = hh >= 12 ? "PM" : "AM";
+  hh = hh % 12 || 12; // 0 -> 12
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${dd}-${mmm}-${yyyy} at ${String(hh).padStart(2,"0")}:${mm} ${ampm}`;
+};
+
 /* ============================================
    FORMS & INTERFACES
    ============================================ */
@@ -535,267 +546,438 @@ const countCheckedByFunction = (selectedSet) => {
   return counts;
 };
 
+
 /* ---------- Export ---------- */
 function ExportButtons({ data, filename, summary }) {
   const exportToJSON = () => {
-    const dataStr = JSON.stringify(data, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url; link.download = `${filename}.json`; link.click();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${filename}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
     URL.revokeObjectURL(url);
   };
-const exportToPDF = () => {
-  const printWindow = window.open('', '_blank');
-  const logoUrl = `${window.location.origin}/abeam-logo.png`;
 
-  // helper formatters (consistent, locale-safe)
-  const fmt = (n) => Number(n).toLocaleString();
-  const currency = (n) => `RM ${fmt(n)}`;
-  const totalTopline = summary.includeAMSInTotal
-    ? (summary.projectPrice + summary.amsPrice)
-    : summary.projectPrice;
+  const exportToPDF = () => {
+    // helpers
+    const N = (v) => (Number.isFinite(+v) ? +v : 0);
+    const num = (v) => N(v).toLocaleString("en-MY");
+    const rm = (v) =>
+      new Intl.NumberFormat("en-MY", { style: "currency", currency: "MYR", maximumFractionDigits: 0 }).format(N(v));
 
-  const today = new Date();
-  const dateStr = today.toLocaleDateString();
+    const s = summary || {};
 
-  const htmlContent = `
-  <!doctype html>
-  <html lang="en">
-  <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-    <title>ABeam — SAP Cloud ERP Proposal</title>
+    // --- Implementation (guarded) ---
+    const baseDays   = N(s.baseDays);
+    const baseRate   = N(s.baseRate);
+    const baseAmount = N(s.baseAmount);
+    const finalDays  = N(s.finalDays);
+    const finalRate  = N(s.finalRate);
+    const rounding   = N(s.rounding);
+    const grandTotal = N(s.grandTotal);
 
-    <!-- Font: Inter (primary) with system UI fallbacks -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    // discount math
+    const mandayPct  = N(s.mandayPct);
+    const ratePct    = N(s.ratePct);
+    const mdAmt      = N(s.mandayDiscountAmount);
+    const rtAmt      = N(s.rateDiscountAmount);
+    const implSub    = N(s.implementationSubtotal);
 
-    <style>
-      :root{
-        --ink: #0b1220;
-        --muted: #5b6370;
-        --line: rgba(10, 20, 30, 0.08);
-        --accent: #1e40af; /* deep indigo */
-        --soft: #f6f8fb;
-      }
-      /* A4 page with generous, print-safe margins */
-      @page { size: A4; margin: 22mm 16mm; }
-      * { box-sizing: border-box; }
-      html, body { height: 100%; }
-      body {
-        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-        -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
-        color: var(--ink);
-        line-height: 1.45;
-        margin: 0;
-      }
-      .wrap { max-width: 740px; margin: 0 auto; }
-      .header{
-        display:flex; align-items:center; gap:14px; padding-bottom:18px; margin-bottom:24px;
-        border-bottom: 1px solid var(--line);
-      }
-      .logo{ height:40px; width:auto; }
-      .eyebrow{ font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
-      .title{ font-size:28px; font-weight:700; letter-spacing:-0.01em; margin:4px 0 2px; }
-      .subtitle{ font-size:13px; color:var(--muted); }
+    const hasImplDiscount =
+      (mandayPct > 0 && mdAmt > 0) || (ratePct > 0 && rtAmt > 0);
 
-      .stats{
-        display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;
-        margin: 18px 0 8px;
-      }
-      .stat{
-        border:1px solid var(--line); border-radius:10px; padding:12px 14px;
-      }
-      .stat .k{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
-      .stat .v{ font-size:22px; font-weight:700; margin-top:2px; letter-spacing:-0.01em; }
+    // --- Effort breakdown (days only) ---
+    const functionalDays = N(s.functionalDays);
+    const fricewDays     = N(s.fricewDays);     // Forms + Interfaces engineering days
+    const technicalDays  = N(s.technicalDays);  // additional technical
+    const wrapperDays    = N(s.wrapperDays);
 
-      .band{
-        margin:18px 0 24px;
-        padding:16px 18px;
-        border:1px solid var(--line);
-        border-radius:12px;
-        background: #fff;
-      }
-      .price{
-        font-size:30px; font-weight:800; letter-spacing:-0.02em;
-      }
-      .price-sub{
-        font-size:12.5px; color:var(--muted); margin-top:4px;
-      }
+    // optional split for wrapper; if not provided, we show a single combined line
+    const wrapSaBasisMig = N(
+      s.wrapperSaBasisMigrationDays ??
+      s.wrapperSaBasisDays ??
+      s.wrapperInfraDays
+    );
+    const wrapPmoEtAl = N(
+      s.wrapperPmoCutoverTrainingHypercareDays ??
+      s.wrapperPmoDays ??
+      s.wrapperSupportDays
+    );
+    const haveSplitWrapper = wrapSaBasisMig + wrapPmoEtAl > 0;
 
-      h2.section{
-        font-size:16px; font-weight:700; letter-spacing:.0em;
-        margin: 22px 0 10px;
-        padding-left:10px; border-left:3px solid var(--accent);
-      }
-      .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-      .card{
-        border:1px solid var(--line); border-radius:10px; padding:12px 14px; background:#fff;
-      }
-      .kv{ margin:2px 0; }
-      .kv b{ font-weight:600; }
+    // --- AMS (with discount support) ---
+    const amsBaseDays   = N(s.amsBaseDays);
+    const amsRate       = N(s.amsRate);
+    const amsBasePrice  = N(s.amsBasePrice);
+    const amsDays       = N(s.amsFinalDays ?? s.amsDays);
+    const amsPrice      = N(s.amsFinalPrice ?? s.amsPrice);
+    const amsPct        = N(s.amsDiscountPct);
+    const amsDaysDelta  = N(s.amsDiscountDaysDelta);
+    const amsDiscAmt    = N(s.amsDiscountAmount);
+    const hasAMS        = amsPrice > 0;
+    const hasAMSDiscount = amsPct > 0 && amsDiscAmt > 0 && amsBaseDays > 0;
 
-      table{
-        width:100%; border-collapse: collapse; margin: 8px 0 4px;
-        font-size:13px;
-      }
-      th, td { padding:9px 10px; text-align:left; border-bottom:1px solid var(--line); }
-      th { font-weight:600; color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
-      td.num { text-align:right; white-space:nowrap; }
-      tr.total-row td{ font-weight:700; }
-      .note { font-size:12.5px; color:var(--muted); }
-      .pill{
-        display:inline-block; font-size:11px; padding:2px 8px; border:1px solid var(--line);
-        border-radius:999px; color:var(--muted); margin-right:6px; margin-bottom:6px;
-      }
+    // scope lists
+    const capabilities = Array.isArray(s.selectedCapabilities) ? s.selectedCapabilities : [];
+    const forms        = Array.isArray(s.selectedForms) ? s.selectedForms : [];
+    const interfaces   = ["Bank Interface (Manual Upload)", ...(Array.isArray(s.selectedInterfaces) ? s.selectedInterfaces : [])];
 
-      .lists{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
-      ul.clean{ margin:0; padding-left:16px; font-size:13px; }
-      ul.clean li{ margin:4px 0; }
-      .warning{
-        border:1px solid rgba(245, 158, 11, .35);
-        background: rgba(254, 243, 199, .35);
-        color:#92400e;
-        padding:10px 12px; border-radius:8px; font-size:13px; margin:8px 0;
-      }
+    const warningsBlock =
+      Array.isArray(s.warnings) && s.warnings.length
+        ? `<div class="note">${s.warnings.map((w) => `<div>• ${w}</div>`).join("")}</div>`
+        : "";
 
-      .footer{
-        margin-top:30px; padding-top:14px; border-top:1px solid var(--line);
-        font-size:11.5px; color:var(--muted);
-      }
+    const logoUrl = `${window.location.origin}/abeam-logo.png`;
+    const generatedAt = formatDateTime(new Date());
 
-      /* print niceties */
-      section, .card, .band, table, .lists { break-inside: avoid; }
-      @media print {
-        a { color: inherit; text-decoration: none; }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="wrap">
+    const html = `
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>ABeam Malaysia — Proposal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0f172a; --sub:#475569; --line:#e2e8f0; --key:#1d4ed8; --muted:#64748b; --bg:#ffffff;
+    --abeam:#0B2F86; /* ABeam brand blue */
+  }
+  *{ box-sizing:border-box; }
 
-      <!-- Header -->
-      <header class="header">
-        <img class="logo" src="${logoUrl}" alt="ABeam Consulting">
-        <div>
-          <div class="eyebrow">ABeam Malaysia</div>
-          <div class="title">SAP Cloud ERP Implementation Proposal</div>
-          <div class="subtitle">Package: ${summary.tier.toUpperCase()} • Industry: ${summary.industryTemplate} • Generated: ${dateStr}</div>
+  body{
+    margin:0;
+    font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+    color:var(--ink); background:var(--bg);
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; text-rendering:optimizeLegibility;
+  }
+
+  /* unified page padding + container alignment */
+  .wrap{ padding:40px 48px; }
+  .container{ max-width:1200px; margin:0 auto; }
+
+/* ---- Header (aligned to container) ---- */
+header{ border-bottom:2px solid var(--line); margin-bottom:22px; }
+.header-inner{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  gap:20px; padding:0 0 18px 0;
+}
+/* Center the logo with the text, and make it a touch larger */
+.brand{ display:flex; align-items:center; gap:16px; min-width:0; }
+.brand img{ height:52px; width:auto; }  /* tweak 52 → 56 if you want it bigger */
+.t1{ font-weight:800; letter-spacing:-.01em; font-size:26px; line-height:1.2; margin:0; }
+.t2{ color:var(--sub); font-size:13px; margin-top:4px; }
+
+  .contacts{ text-align:right; font-size:13px; line-height:1.35; color:var(--ink); max-width:520px; }
+  .contacts .co{ font-weight:700; margin-bottom:4px; }
+  .contacts a{ color:var(--abeam); text-decoration:none; font-weight:600; }
+  .contacts a:hover{ text-decoration:underline; }
+
+  /* ===== Hero ===== */
+/* center the content inside the hero bar */
+.hero{
+  background:var(--abeam); color:#fff; border-radius:14px; padding:24px;
+  margin:18px 0 26px;
+  display:flex;
+  justify-content:center;   /* horizontally center */
+  align-items:center;       /* optional: vertical centering */
+}
+
+.hero-inner{
+  margin:0 auto;            /* remove the previous margin-left:auto */
+  text-align:center;        /* center the text */
+}
+.hero .big{ font-size:30px; font-weight:800; margin:0 0 6px; }
+.hero .sub{ font-size:13px; opacity:.9; }
+
+  /* ===== Layout / Cards ===== */
+  h3.section{ font-size:17px; margin:26px 0 10px; font-weight:700; letter-spacing:.01em; }
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .grid-2-1{ display:grid; grid-template-columns:2fr 1fr; gap:16px; }
+  .grid-3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+
+  .card{ border:1px solid var(--line); border-radius:12px; padding:14px; background:#fff; }
+  .label{ color:var(--muted); font-size:12px; }
+  .value{ font-weight:600; font-size:14px; }
+
+  /* ===== Tables ===== */
+  table{ width:100%; border-collapse:collapse; margin-top:10px; }
+  th, td{ padding:10px 12px; border-bottom:1px solid var(--line); font-size:13px; }
+  th{ text-align:left; color:var(--muted); font-weight:600; letter-spacing:.02em; }
+  .right, .text-right{ text-align:right; }
+  .row-discount td{ color:#065f46; background:#ecfdf5; }
+  .strong td, td.strong{ font-weight:800; }
+  .subhead td{ color:var(--muted); font-weight:600; background:#f8fafc; }
+  tfoot td{ border-top:2px solid var(--ink); font-weight:800; }
+
+  /* ===== Notes / Footer ===== */
+  .note{ margin-top:14px; background:#fffbeb; border:1px solid #f59e0b; color:#92400e; padding:10px 12px; border-radius:10px; font-size:12px; }
+  .foot{ margin-top:28px; padding-top:16px; border-top:1px solid var(--line); color:var(--muted); font-size:12px; }
+
+  /* legacy bottom contact block (kept for completeness) */
+  .contact{ margin-top:18px; }
+  .contact .addr{ line-height:1.5; font-size:13px; }
+  .contact a{ color:var(--key); text-decoration:none; }
+  .contact a:hover{ text-decoration:underline; }
+
+  /* ===== Responsive / Print ===== */
+  @media print{
+    .wrap{ padding:24px 28px; }
+    .grid-2, .grid-2-1{ grid-template-columns:1fr 1fr; }
+    .grid-3{ grid-template-columns:1fr 1fr 1fr; }
+  }
+  @media (max-width: 820px){
+    .grid-2, .grid-2-1, .grid-3{ grid-template-columns:1fr; }
+    .contacts{ text-align:left; max-width:none; }
+  }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+<header>
+  <div class="container header-inner">
+    <div class="brand">
+      <img src="${logoUrl}" alt="ABeam" />
+      <div>
+        <div class="t1">SAP Cloud ERP Implementation Proposal</div>
+        <div class="t2">
+          Package: ${String(s.tier || "").toUpperCase()}
+          • Industry: ${s.industryTemplate || ""}
+          • Generated: ${generatedAt}
         </div>
-      </header>
-
-      <!-- Key Figures -->
-      <div class="stats">
-        <div class="stat">
-          <div class="k">Project Price${summary.includeAMSInTotal ? " (incl. AMS)" : ""}</div>
-          <div class="v">${currency(totalTopline)}</div>
-        </div>
-        <div class="stat">
-          <div class="k">Total Mandays</div>
-          <div class="v">${fmt(summary.totalMandays)} d</div>
-        </div>
-        <div class="stat">
-          <div class="k">Estimated Timeline</div>
-          <div class="v">${fmt(summary.timelineWeeks)} wks</div>
-        </div>
-      </div>
-
-      <!-- Executive Summary band -->
-      <div class="band">
-        <div class="price">${currency(totalTopline)}</div>
-        <div class="price-sub">
-          ${fmt(summary.totalMandays)} mandays • ${fmt(summary.timelineWeeks)} weeks (${summary.timelineMonths} months)
-          ${summary.includeAMSInTotal ? " • AMS included" : ""}
-        </div>
-      </div>
-
-      <!-- Executive Summary -->
-      <h2 class="section">Executive Summary</h2>
-      <div class="grid-2">
-        <div class="card">
-          <div class="kv"><b>Implementation Approach</b></div>
-          <div class="kv">Tier: <b>${summary.tier.toUpperCase()}</b></div>
-          <div class="kv">Industry: <b>${summary.industryTemplate}</b></div>
-          <div class="kv">Risk Level: <b>${summary.riskMultiplier.toFixed(2)}×</b></div>
-        </div>
-        <div class="card">
-          <div class="kv"><b>Timeline & Resourcing</b></div>
-          <div class="kv">Duration: <b>${fmt(summary.timelineWeeks)} weeks</b> (${summary.timelineMonths} months)</div>
-          <div class="kv">Team Size: <b>${summary.teamSize} FTE</b></div>
-          <div class="kv">Utilization: <b>${summary.utilization}%</b></div>
-        </div>
-      </div>
-
-      <!-- Effort Breakdown -->
-      <h2 class="section">Effort Breakdown</h2>
-      <table>
-        <thead>
-          <tr><th>Component</th><th class="num">Days</th><th class="num">Cost (RM)</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Functional Implementation</td><td class="num">${fmt(summary.functionalDays)}</td><td class="num">${currency(summary.functionalDays * summary.projectRate)}</td></tr>
-          <tr><td>Forms & Interfaces (FRICEW)</td><td class="num">${fmt(summary.fricewDays)}</td><td class="num">${currency(summary.fricewDays * summary.projectRate)}</td></tr>
-          <tr><td>Technical Setup</td><td class="num">${fmt(summary.technicalDays)}</td><td class="num">${currency(summary.technicalDays * summary.projectRate)}</td></tr>
-          <tr><td>Project Delivery Wrapper</td><td class="num">${fmt(summary.wrapperDays)}</td><td class="num">${currency(summary.wrapperDays * summary.projectRate)}</td></tr>
-          <tr class="total-row"><td>Total Implementation</td><td class="num">${fmt(summary.totalMandays)}</td><td class="num">${currency(summary.projectPrice)}</td></tr>
-          ${summary.amsPrice > 0 ? `<tr><td>AMS Bundle (3 years)</td><td class="num">${fmt(summary.amsDays)}</td><td class="num">${currency(summary.amsPrice)}</td></tr>` : ''}
-        </tbody>
-      </table>
-      <div class="note">Rate: ${currency(summary.projectRate)} per manday. Prices rounded as configured in app.</div>
-
-      <!-- Scope Summary -->
-      <h2 class="section">Scope Summary</h2>
-      <div class="lists">
-        <div class="card">
-          <div class="kv"><b>Selected Capabilities</b></div>
-          <div style="margin-top:6px;">
-            ${summary.selectedCapabilities && summary.selectedCapabilities.length
-              ? `<ul class="clean">` + summary.selectedCapabilities.map(x => `<li>${x}</li>`).join("") + `</ul>`
-              : `<span class="note">None selected.</span>`}
-          </div>
-        </div>
-        <div class="card">
-          <div class="kv"><b>Forms & Interfaces</b></div>
-          <div style="margin-top:6px;">
-            <div class="kv"><span class="pill">Forms</span></div>
-            ${summary.selectedForms && summary.selectedForms.length
-              ? `<ul class="clean" style="margin-top:6px;">` + summary.selectedForms.map(x => `<li>${x}</li>`).join("") + `</ul>`
-              : `<span class="note">No forms selected.</span>`}
-            <div class="kv" style="margin-top:10px;"><span class="pill">Interfaces</span></div>
-            ${summary.selectedInterfaces && summary.selectedInterfaces.length
-              ? `<ul class="clean" style="margin-top:6px;">` + summary.selectedInterfaces.map(x => `<li>${x}</li>`).join("") + `</ul>`
-              : `<span class="note">No interfaces selected.</span>`}
-          </div>
-        </div>
-      </div>
-
-      ${summary.warnings && summary.warnings.length ? `
-      <h2 class="section">Project Considerations</h2>
-      ${summary.warnings.map(w => `<div class="warning">⚠️ ${w}</div>`).join("")}
-      ` : ""}
-
-      <div class="footer">
-        This document was generated by ABeam Malaysia’s SAP Package Calculator on ${dateStr}.<br/>
-        Final scope & pricing to be confirmed in the Statement of Work.
       </div>
     </div>
-  </body>
-  </html>`;
 
-  printWindow.document.write(htmlContent);
-  printWindow.document.close();
-  setTimeout(() => printWindow.print(), 400);
-};
+    <div class="contacts">
+      <div class="co">ABeam Consulting (Malaysia) Sdn. Bhd.</div>
+      <div><strong>HQ:</strong> Level 2, KYM Tower, 8, Jalan PJU 7/6, Mutiara Damansara, 47800 PJ, Selangor •
+        Tel <a href="tel:+60376601881">+60-3-7660-1881</a></div>
+      <div><strong>Penang:</strong> 1-10-01, Menara IJM Land, 1 Lebuh Tunku Kudin 3, 11700 Gelugor, Penang •
+        Tel <a href="tel:+6046569181">+60-4-656-9181</a></div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="big">${rm(grandTotal)}</div>
+      <div class="sub">
+        ${num(finalDays)} mandays • ${num(s.timelineWeeks)} weeks • ${num(s.teamSize)} ABeam Team Members • Utilization ${num(s.utilization)}%
+</div>
+  </div>
+</div>
+
+    <!-- Delivery & Team -->
+    <h3 class="section">Delivery & Team</h3>
+    <div class="grid-2">
+      <div class="card">
+        <div class="label">Timeline</div>
+        <div class="value">${num(s.timelineWeeks)} weeks (${num(s.timelineMonths)} months)</div>
+      </div>
+      <div class="card">
+        <div class="label">Team & Capacity</div>
+        <div class="value">${num(s.teamSize)} FTE • ${num(s.workingDaysPerWeek)} days/week • Utilization ${num(s.utilization)}%</div>
+      </div>
+    </div>
+
+    <!-- Effort Breakdown (Mandays) -->
+    <h3 class="section">Effort Breakdown (Mandays)</h3>
+    <table>
+      <thead>
+        <tr><th>Item</th><th class="right">Qty/Days</th></tr>
+      </thead>
+      <tbody>
+        <tr class="subhead"><td colspan="2">Implementation</td></tr>
+        <tr><td>Functional</td><td class="right">${num(functionalDays)} d</td></tr>
+        <tr><td>Technical (FRICEW)</td><td class="right">${num(fricewDays + technicalDays)} d</td></tr>
+
+        <tr class="subhead"><td colspan="2">Delivery Wrapper</td></tr>
+        ${
+          haveSplitWrapper
+            ? `
+              <tr><td>S&A, BASIS, Migration</td><td class="right">${num(wrapSaBasisMig)} d</td></tr>
+              <tr><td>PMO, Cutover, Training, Hypercare</td><td class="right">${num(wrapPmoEtAl)} d</td></tr>
+            `
+            : `
+              <tr><td>S&A, BASIS, Migration, PMO, Cutover, Training, Hypercare</td><td class="right">${num(wrapperDays)} d</td></tr>
+            `
+        }
+
+        <tr class="strong"><td>Total Implementation Mandays</td><td class="right">${num(finalDays)} d</td></tr>
+        ${ hasAMS ? `<tr><td>AMS (3 years)</td><td class="right">${num(amsDays)} d</td></tr>` : `` }
+      </tbody>
+    </table>
+
+    <!-- Financial Summary -->
+    <h3 class="section">Financial Summary</h3>
+    <table>
+      <thead>
+        <tr><th>Item</th><th class="right">Qty/Days</th><th class="right">Rate</th><th class="right">Amount (RM)</th></tr>
+      </thead>
+      <tbody>
+        ${
+          hasImplDiscount
+            ? `
+              <tr>
+                <td>Implementation — Base</td>
+                <td class="right">${num(baseDays)} d</td>
+                <td class="right">RM ${num(baseRate)}</td>
+                <td class="right">RM ${num(baseAmount)}</td>
+              </tr>
+              ${mandayPct > 0 && mdAmt > 0 ? `
+                <tr class="row-discount">
+                  <td>Less: Manday Discount (${num(mandayPct)}%)</td>
+                  <td class="right">→ ${num(s.mandayDaysDelta)} d</td>
+                  <td class="right">RM ${num(baseRate)}</td>
+                  <td class="right">– RM ${num(mdAmt)}</td>
+                </tr>` : ``}
+              ${ratePct > 0 && rtAmt > 0 ? `
+                <tr class="row-discount">
+                  <td>Less: Rate Discount (${num(ratePct)}%)</td>
+                  <td class="right">${num(finalDays)} d</td>
+                  <td class="right">→ RM ${num(finalRate)}</td>
+                  <td class="right">– RM ${num(rtAmt)}</td>
+                </tr>` : ``}
+              <tr class="strong">
+                <td>Implementation Subtotal</td>
+                <td class="right">${num(finalDays)} d</td>
+                <td class="right">RM ${num(finalRate)}</td>
+                <td class="right">RM ${num(implSub)}</td>
+              </tr>
+            `
+            : `
+              <tr class="strong">
+                <td>Implementation</td>
+                <td class="right">${num(finalDays)} d</td>
+                <td class="right">RM ${num(finalRate)}</td>
+                <td class="right">RM ${num(implSub)}</td>
+              </tr>
+            `
+        }
+
+        ${
+          hasAMS
+            ? (
+                hasAMSDiscount
+                  ? `
+                    <tr>
+                      <td>AMS Bundle (3 years) — Base</td>
+                      <td class="right">${num(amsBaseDays)} d</td>
+                      <td class="right">RM ${num(amsRate)}</td>
+                      <td class="right">RM ${num(amsBasePrice)}</td>
+                    </tr>
+                    <tr class="row-discount">
+                      <td>Less: AMS Discount (${num(amsPct)}%)</td>
+                      <td class="right">→ ${num(amsDaysDelta)} d</td>
+                      <td class="right">RM ${num(amsRate)}</td>
+                      <td class="right">– RM ${num(amsDiscAmt)}</td>
+                    </tr>
+                    <tr class="strong">
+                      <td>AMS Subtotal</td>
+                      <td class="right">${num(amsDays)} d</td>
+                      <td class="right">RM ${num(amsRate)}</td>
+                      <td class="right">RM ${num(amsPrice)}</td>
+                    </tr>
+                  `
+                  : `
+                    <tr>
+                      <td>AMS Bundle (3 years)</td>
+                      <td class="right">${num(amsDays)} d</td>
+                      <td class="right">RM ${num(amsRate)}</td>
+                      <td class="right">RM ${num(amsPrice)}</td>
+                    </tr>
+                  `
+              )
+            : ``
+        }
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3">Grand Total</td>
+          <td class="right">RM ${num(grandTotal)}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="t2" style="margin-top:8px">Rounding step: RM ${num(rounding)}. All figures include configured discounts and rounding.</div>
+
+    <!-- Scope Summary -->
+    <h3 class="section">Scope Summary</h3>
+    <div class="grid-3">
+      <div class="card">
+        <div class="label">Selected Capabilities</div>
+        <div class="value" style="margin-top:6px; font-weight:500;">
+          ${capabilities.length ? capabilities.map(x => `<div>• ${x}</div>`).join("") : "—"}
+        </div>
+      </div>
+      <div class="card">
+        <div class="label">Forms</div>
+        <div class="value" style="margin-top:6px; font-weight:500;">
+          ${forms.length ? forms.map(x => `<div>• ${x}</div>`).join("") : "—"}
+        </div>
+      </div>
+      <div class="card">
+        <div class="label">Interfaces</div>
+        <div class="value" style="margin-top:6px; font-weight:500;">
+          ${interfaces.map(x => `<div>• ${x}</div>`).join("")}
+        </div>
+      </div>
+    </div>
+
+    ${warningsBlock}
+
+<div class="foot" style="text-align:center;">
+  <span style="color:#0B2F86; font-weight:800; font-size:16px; letter-spacing:.01em;">
+    Thank you for your interest. The estimates are indicative and will be refined collaboratively. We look forward to working with you.
+  </span>
+</div>
+  </div>
+</div>
+</body>
+</html>`;
+
+    const w = window.open("", "_blank");
+    if (w) {
+      w.document.write(html);
+      w.document.close();
+      w.focus();
+      setTimeout(() => { try { w.print(); } catch (e) {} }, 400);
+    } else {
+      // popup blocked fallback
+      const blob = new Blob([html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+  };
 
   return (
     <div className="flex flex-col sm:flex-row gap-2">
-      <button onClick={exportToPDF} className="px-3 py-1.5 text-[14.5px] sm:text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Generate Proposal (PDF)</button>
-      <button onClick={exportToJSON} className="px-3 py-1.5 text-[14.5px] sm:text-sm bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition">Save Config (JSON)</button>
+      <button
+        onClick={exportToPDF}
+        className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+      >
+        Generate Proposal (PDF)
+      </button>
+      <button
+        onClick={exportToJSON}
+        className="px-3 py-1.5 text-sm bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition"
+      >
+        Save Config (JSON)
+      </button>
     </div>
   );
 }
+
+
 
 /* =============================== Main App =============================== */
 export default function App() {
@@ -860,8 +1042,16 @@ export default function App() {
   const [adminOverride, setAdminOverride] = useState(false);
 
   /* QUICK preset override */
-  const [quickPresetOverrideOn, setQuickPresetOverrideOn] = useState(true);
-  const [presetOverrides, setPresetOverrides] = useState({ essential: null, standard: null, premium: null });
+  const [quickPresetOverrideOn, setQuickPresetOverrideOn] = useState(false);
+  const [presetOverrides, setPresetOverrides] = useState({
+  essential: null, standard: null, premium: null
+});
+// Helpers that apply the current tier respecting the override toggle
+const applyTierQuick = (t) =>
+  applyTier(t, { useOverrides: quickPresetOverrideOn, overrides: presetOverrides });
+
+const applyTierPro = (t) =>
+  applyTier(t, { useOverrides: quickPresetOverrideOn, overrides: presetOverrides });
 
   // Persist overrides
   useEffect(() => {
@@ -918,7 +1108,7 @@ export default function App() {
   };
 
   const applyTierWithOverrides = (t) =>
-    applyTier(t, { useOverrides: quickPresetOverrideOn, overrides: presetOverrides });
+  applyTier(t, { useOverrides: quickPresetOverrideOn, overrides: presetOverrides });
 
   const applyIndustryTemplate = (template) => {
     setIndustryTemplate(template);
@@ -946,10 +1136,11 @@ export default function App() {
   }, [mode, tier]); // eslint-disable-line
 
   // Re-apply if overrides change (while toggle ON)
-  useEffect(() => {
-    if (mode === "quick" && quickPresetOverrideOn)
-      applyTier(tier, { useOverrides: true, overrides: presetOverrides });
-  }, [presetOverrides, quickPresetOverrideOn, mode, tier]);
+useEffect(() => {
+  if (mode === "quick" && quickPresetOverrideOn) {
+    applyTier(tier, { useOverrides: true, overrides: presetOverrides });
+  }
+}, [presetOverrides, quickPresetOverrideOn, mode, tier]);
 
   /* ===== Calculations ===== */
   const sgSelected = useMemo(() => SG_CAPS.filter(c => selectedCaps.has(c.key)), [selectedCaps]);
@@ -1011,14 +1202,19 @@ export default function App() {
 
   const timelineWeeks  = Math.ceil(myTotalMandays / (Math.max(1, teamSize) * Math.max(1, workingDaysPerWeek)));
   const timelineMonths = Math.round((timelineWeeks / 4.33) * 10) / 10;
+  const capacityMandays = Math.max(1, teamSize) * Math.max(1, workingDaysPerWeek) * Math.max(1, timelineWeeks);
+  const utilizationPct = Math.min(100, Math.round((myTotalMandays / capacityMandays) * 100));
 
-  const amS = useMemo(() => {
-    if (!selectedAMS) return { days: 0, price: 0 };
-    const opt = AMS_CHOICES.find(a => a.key === selectedAMS);
-    const totalDays = opt.daysPerYear * 3;
-    const discounted = Math.round(totalDays * (1 - amsDiscountPct / 100));
-    return { days: discounted, price: roundTo(discounted * amsRate, rounding) };
-  }, [selectedAMS, amsDiscountPct, amsRate, rounding]);
+
+const amS = useMemo(() => {
+  if (!selectedAMS) return { days: 0, price: 0, baseDays: 0, basePrice: 0 };
+  const opt = AMS_CHOICES.find(a => a.key === selectedAMS);
+  const baseDays = opt.daysPerYear * 3;
+  const discountedDays = Math.round(baseDays * (1 - amsDiscountPct / 100));
+  const basePrice = roundTo(baseDays * amsRate, rounding);
+  const price = roundTo(discountedDays * amsRate, rounding);
+  return { days: discountedDays, price, baseDays, basePrice };
+}, [selectedAMS, amsDiscountPct, amsRate, rounding]);
 
   const grandTotal = myProjectPrice + (includeAMSInTotal ? amS.price : 0);
 
@@ -1056,31 +1252,100 @@ export default function App() {
     timestamp: new Date().toISOString()
   };
 
-  const pdfSummary = {
-    tier,
-    industryTemplate: INDUSTRY_TEMPLATES[industryTemplate].name,
-    projectPrice: myProjectPrice,
-    totalMandays: myTotalMandays,
-    timelineWeeks, timelineMonths,
-    teamSize,
-    utilization: Math.round((myTotalMandays / Math.max(1, timelineWeeks) / Math.max(1, teamSize)) * 100),
-    riskMultiplier,
-    functionalDays: myFunctionalDays,
-    fricewDays: formsDays + ifDays,
-    technicalDays, wrapperDays,
-    projectRate: myProjectRate,
-    sgFunctionalDays, sgFunctionalPriceMYR: Math.round(sgFunctionalPriceMYR),
-    efficiency: Math.round((1 - myTotalMandays / Math.max(1, sgFunctionalDays || 1)) * 100),
-    amsDays: amS.days, amsPrice: amS.price,
-    includeAMSInTotal,
-    mandayDiscount: allowMandayDiscount ? mandayDiscountPct : 0,
-    rateDiscount: rateDiscountPct,
-    selectedCapabilities: SG_CAPS.filter(c => selectedCaps.has(c.key)).map(c => c.label),
-    selectedForms: FORMS.filter(f => selectedForms.has(f.key)).map(f => f.label),
-    selectedInterfaces: INTERFACES.filter(i => selectedIfs.has(i.key)).map(i => i.label),
-    warnings,
-    competitorAnalysis: []
-  };
+// --- Derived figures for a clean PDF breakdown ---
+const baseDays = myTotalMandaysWithRisk;               // before any discount
+const baseRate = myRate;                                // before rate discount
+const finalDays = myTotalMandays;                       // after manday discount
+const finalRate = myProjectRate;                        // after rate discount
+
+const mandayPct = allowMandayDiscount ? Number(mandayDiscountPct) : 0;
+const ratePct   = Number(rateDiscountPct);
+
+const mandayDaysDelta = Math.max(0, baseDays - finalDays);     // days reduced by manday discount
+const ratePerDayDelta = Math.max(0, baseRate - finalRate);     // rate reduced by rate discount
+
+const baseAmount             = roundTo(baseDays * baseRate, rounding);
+const mandayDiscountAmount   = roundTo(mandayDaysDelta * baseRate, rounding);
+const rateDiscountAmount     = roundTo(ratePerDayDelta * finalDays, rounding);
+const implementationSubtotal = roundTo(baseAmount - mandayDiscountAmount - rateDiscountAmount, rounding);
+const grandTotalPDF          = roundTo(implementationSubtotal + (includeAMSInTotal ? amS.price : 0), rounding);
+
+// capacity + utilization for PDF (renamed to avoid collisions)
+const pdfCapacityMandays = Math.max(1, teamSize) * Math.max(1, workingDaysPerWeek) * Math.max(1, timelineWeeks);
+const pdfUtilizationPct  = Math.min(100, Math.round((myTotalMandays / pdfCapacityMandays) * 100));
+
+// --- AMS base vs final (for PDF breakdown) ---
+const amsBaseDays = selectedAMS
+  ? (AMS_CHOICES.find(a => a.key === selectedAMS)?.daysPerYear || 0) * 3
+  : 0;
+const amsBasePrice = roundTo(amsBaseDays * amsRate, rounding);
+const amsDiscountDaysDelta = Math.max(0, amsBaseDays - (amS.days || 0));
+const amsDiscountAmount    = Math.max(0, amsBasePrice - (amS.price || 0));
+
+
+const pdfSummary = {
+  // context
+  tier,
+  industryTemplate: INDUSTRY_TEMPLATES[industryTemplate].name,
+
+  // timeline + team
+  timelineWeeks,
+  timelineMonths,
+  teamSize,
+  workingDaysPerWeek,
+  utilization: utilizationPct,
+
+  // effort breakdown
+  functionalDays: myFunctionalDays,
+  fricewDays: formsDays + ifDays,
+  technicalDays,
+  wrapperDays,
+
+  // pricing (final)
+  projectRate: finalRate,
+  projectPrice: myProjectPrice,
+  amsDays: amS.days,
+  amsPrice: amS.price,
+  includeAMSInTotal,
+
+  // before/after for math
+  baseDays,
+  baseRate,
+  baseAmount,
+  finalDays,
+  finalRate,
+
+  // discounts
+  mandayPct,
+  ratePct,
+  mandayDaysDelta,
+  ratePerDayDelta,
+  mandayDiscountAmount,
+  rateDiscountAmount,
+
+  // totals
+  implementationSubtotal,
+  grandTotal: grandTotalPDF,
+  rounding,
+  
+  amsRate,                 // per-day rate used for AMS
+  amsDiscountPct: amsDiscountPct,  // the % from your AMS control
+  amsBaseDays,             // before discount
+  amsBasePrice,            // before discount
+  amsFinalDays: amS.days,  // after discount
+  amsFinalPrice: amS.price,
+  amsDiscountDaysDelta,    // days removed by discount
+  amsDiscountAmount,       // RM reduced by discount
+  // refs
+  sgFunctionalDays,
+  sgFunctionalPriceMYR: Math.round(sgFunctionalPriceMYR),
+  riskMultiplier,
+  warnings,
+  selectedCapabilities: SG_CAPS.filter(c => selectedCaps.has(c.key)).map(c => c.label),
+  selectedForms: FORMS.filter(f => selectedForms.has(f.key)).map(f => f.label),
+  selectedInterfaces: INTERFACES.filter(i => selectedIfs.has(i.key)).map(i => i.label),
+};
+
 
   /* =============== UI =============== */
   return (
@@ -1202,6 +1467,10 @@ export default function App() {
           amS={amS}
           exportData={exportData} pdfSummary={pdfSummary}
           applyTierWithOverrides={applyTierWithOverrides}
+          teamSize={teamSize}
+          setTeamSize={setTeamSize}
+          workingDaysPerWeek={workingDaysPerWeek}
+          setWorkingDaysPerWeek={setWorkingDaysPerWeek}
         />
       )}
     </div>
@@ -1719,6 +1988,9 @@ function ProMode(props) {
     selectedAMS, setSelectedAMS,
     amsDiscountPct, setAmsDiscountPct,
     includeAMSInTotal, setIncludeAMSInTotal,
+    // timeline controls
+    teamSize, setTeamSize,
+    workingDaysPerWeek, setWorkingDaysPerWeek,
     // numbers
     sgFunctionalDays,
     sgFunctionalPriceMYR,
@@ -1803,6 +2075,19 @@ function ProMode(props) {
           capDays={capDays} setCapDays={setCapDays}
           tier={tier}
         />
+
+        {/* Delivery Tempo */}
+        <Card title="Delivery Tempo" subtitle="We’ll compute an achievable timeline and utilization.">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Field label="Team Size (FTE)" value={teamSize} setValue={setTeamSize} />
+            <Field label="Working Days/Week" value={workingDaysPerWeek} setValue={setWorkingDaysPerWeek} />
+            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50">
+              <div className="text-sm text-slate-600">Estimated Timeline</div>
+              <div className="text-lg font-semibold">{timelineWeeks} weeks</div>
+              <div className="text-xs text-slate-600">{timelineMonths} months</div>
+            </div>
+          </div>
+        </Card>
 
         {/* Technical & Wrapper */}
         <Card title="Technical & Delivery Wrapper">
@@ -1893,7 +2178,6 @@ function ProMode(props) {
               <Range label="Manday Discount" value={mandayDiscountPct} setValue={setMandayDiscountPct} />
             </div>
             <Range label="Rate Discount" value={rateDiscountPct} setValue={setRateDiscountPct} />
-            <Range label="AMS Bundle Discount" value={amsDiscountPct} setValue={setAmsDiscountPct} min={0} max={25} />
           </div>
         </Card>
 

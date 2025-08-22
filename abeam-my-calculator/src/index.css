@@ -1,8 +1,149 @@
-/* Use the new v4 import (reliable) */
+/* =========================================================
+   Tailwind core
+   ========================================================= */
 @import "tailwindcss";
 
-/* Optional: tiny smoothing */
+/* =========================================================
+   Base polish
+   ========================================================= */
 html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@media (max-width: 420px) { html { font-size: 17px; } }  /* ~+6% */
+@media (max-width: 360px) { html { font-size: 18px; } }  /* ~+12% */
+
+/* =========================================================
+   ABeam brand tokens (CSS variables)
+   ========================================================= */
+:root{
+  /* Brand */
+  --abeam-50:  #E6EEFA;
+  --abeam-200: #B8C8EA;
+  --abeam-600: #0B2F86;
+  --abeam-700: #092C79;
+  --abeam-800: #072562;
+
+  /* Neutral UI */
+  --ink:  #0f172a;
+  --sub:  #475569;
+  --line: #e2e8f0;
+}
+
+/* Optional helpers if you want quick color utilities without Tailwind */
+.text-abeam     { color: var(--abeam-600); }
+.bg-abeam       { background: var(--abeam-600); }
+.border-abeam   { border-color: var(--abeam-600); }
+
+/* =========================================================
+   Buttons (opt-in)
+   Usage: className="btn-primary ..."
+   ========================================================= */
+.btn-primary{
+  background: var(--abeam-600);
+  color: #fff;
+  border: 1px solid var(--abeam-600);
+  border-radius: 10px;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease;
+}
+.btn-primary:hover{ background: var(--abeam-700); border-color: var(--abeam-700); }
+.btn-primary:active{ background: var(--abeam-800); border-color: var(--abeam-800); }
+.btn-primary:focus{ outline: 0; box-shadow: 0 0 0 3px rgba(11,47,134,.25); }
+.btn-primary:disabled{ opacity: .6; cursor: not-allowed; }
+
+/* Outline variant (optional) */
+.btn-outline-primary{
+  background: #fff;
+  color: var(--abeam-600);
+  border: 1px solid var(--abeam-600);
+  border-radius: 10px;
+  transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.btn-outline-primary:hover{ background: var(--abeam-50); }
+.btn-outline-primary:focus{ outline: 0; box-shadow: 0 0 0 3px rgba(11,47,134,.18); }
+
+/* =========================================================
+   Chips / Toggles / Tabs (opt-in)
+   Neutral by default; turn blue only when active.
+   Usage:
+     className={`chip ${active ? 'is-active' : ''}`}
+     OR set aria-pressed="true" / data-state="on"
+   ========================================================= */
+.chip{
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  background: #fff;
+  color: var(--abeam-600);
+  border: 1px solid var(--abeam-200);
+  border-radius: 9999px;
+  padding: .375rem .875rem;
+  font-weight: 600;
+  font-size: .875rem;
+  transition: background .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.chip:hover{ border-color: var(--abeam-600); }
+.chip:focus{ outline: 0; box-shadow: 0 0 0 3px rgba(11,47,134,.18); }
+
+/* Active states */
+.chip.is-active,
+.chip[aria-pressed="true"],
+.chip[data-state="on"]{
+  background: var(--abeam-600);
+  color: #fff;
+  border-color: var(--abeam-600);
+}
+
+/* Optional small icon dot inside chip */
+.chip .dot{
+  width: .65rem; height: .65rem; border-radius: 9999px;
+  background: currentColor; opacity: .35;
+}
+
+/* If you use tab-like toggles, you can alias them to chips */
+.tab{ composes: chip; }            /* if using PostCSS modules; else copy .chip rules */
+.tab.is-active{ composes: is-active; } /* or just add both classes in JSX */
+
+/* =========================================================
+   Proposal hero banner (opt-in utility for the web UI)
+   Add className="proposal-hero" to the banner container.
+   Then wrap text in <div class="inner"> and optionally use:
+     proposal-hero align-right  -> content right-aligned
+     proposal-hero center       -> content centered
+   ========================================================= */
+.proposal-hero{
+  background: var(--abeam-600);
+  color: #fff;
+  border-radius: 1rem;
+}
+.proposal-hero .inner{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+.proposal-hero.center .inner{
+  align-items: center;
+  text-align: center;
+}
+.proposal-hero .big{
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.proposal-hero .meta{
+  opacity: .9;
+}
+
+/* =========================================================
+   Form focus helper (opt-in)
+   Add className="focus-abeam" to inputs you want in-brand focus ring
+   ========================================================= */
+.focus-abeam:focus{
+  outline: 0;
+  border-color: var(--abeam-600);
+  box-shadow: 0 0 0 3px rgba(11,47,134,.20);
 }
