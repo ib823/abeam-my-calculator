@@ -774,9 +774,10 @@ function ExportButtons({ data, filename, summary }) {
 <body>
 <div class="wrap">
 
-  <!-- Header -->
+<!-- Header -->
 <header>
   <div class="container header-inner">
+    <!-- Brand (logo + title) -->
     <div class="brand">
       <img src="${logoUrl}" alt="ABeam" />
       <div>
@@ -789,12 +790,19 @@ function ExportButtons({ data, filename, summary }) {
       </div>
     </div>
 
+    <!-- Contacts (keeps right on desktop, stacks centered on mobile) -->
     <div class="contacts">
       <div class="co">ABeam Consulting (Malaysia) Sdn. Bhd.</div>
-      <div><strong>HQ:</strong> Level 2, KYM Tower, 8, Jalan PJU 7/6, Mutiara Damansara, 47800 PJ, Selangor •
-        Tel <a href="tel:+60376601881">+60-3-7660-1881</a></div>
-      <div><strong>Penang:</strong> 1-10-01, Menara IJM Land, 1 Lebuh Tunku Kudin 3, 11700 Gelugor, Penang •
-        Tel <a href="tel:+6046569181">+60-4-656-9181</a></div>
+      <div>
+        <strong>HQ:</strong> Level 2, KYM Tower, 8, Jalan PJU 7/6, Mutiara Damansara,
+        47800 PJ, Selangor •
+        Tel <a href="tel:+60376601881">+60-3-7660-1881</a>
+      </div>
+      <div>
+        <strong>Penang:</strong> 1-10-01, Menara IJM Land, 1 Lebuh Tunku Kudin 3,
+        11700 Gelugor, Penang •
+        Tel <a href="tel:+6046569181">+60-4-656-9181</a>
+      </div>
     </div>
   </div>
 </header>

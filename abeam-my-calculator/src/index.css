@@ -205,3 +205,6 @@ header{
   .t1{ font-size:22px; }
   .t2{ font-size:12px; }
 }
+
+.brand img { height: 60px; width: auto; }  /* was 56px */
+
