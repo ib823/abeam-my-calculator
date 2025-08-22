@@ -147,3 +147,61 @@ html, body {
   border-color: var(--abeam-600);
   box-shadow: 0 0 0 3px rgba(11,47,134,.20);
 }
+/* ---- Header (responsive, no overlap) ---- */
+header{
+  border-bottom:2px solid var(--line);
+  margin-bottom:22px;
+}
+.header-inner{
+  display:grid;
+  grid-template-columns: 1fr 1fr;   /* left: logo+title  |  right: contacts */
+  gap:20px;
+  align-items:center;
+  padding:0 0 18px 0;
+}
+
+/* Brand (logo + title) */
+.brand{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  min-width:0;             /* allow text to wrap instead of overflow */
+}
+.brand img{ height:56px; width:auto; } /* bump slightly for balance */
+.t1{ font-weight:800; letter-spacing:-.01em; font-size:26px; line-height:1.2; margin:0; }
+.t2{ color:var(--sub); font-size:13px; margin-top:4px; }
+
+/* Contacts (no overlap, wrap long lines) */
+.contacts{
+  justify-self:end;        /* push to the right on desktop */
+  text-align:right;
+  font-size:13px;
+  line-height:1.35;
+  color:var(--ink);
+  max-width:560px;
+  overflow-wrap:anywhere;  /* wrap long address lines on small screens */
+  min-width:0;
+}
+.contacts .co{ font-weight:700; margin-bottom:4px; }
+.contacts a{ color:var(--abeam); text-decoration:none; font-weight:600; }
+.contacts a:hover{ text-decoration:underline; }
+
+/* ===== Responsive ===== */
+@media (max-width: 900px){
+  .header-inner{
+    grid-template-columns: 1fr;  /* stack */
+    justify-items:center;        /* center both blocks */
+    row-gap:12px;
+  }
+  .contacts{
+    text-align:center;
+    max-width:100%;
+  }
+  .t1{ text-align:center; }
+}
+
+@media (max-width: 520px){
+  .brand img{ height:50px; }
+  .t1{ font-size:22px; }
+  .t2{ font-size:12px; }
+}
