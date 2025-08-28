@@ -1,48 +1,46 @@
-# UX Contract
+# AI UX Contract
 
-## Design tokens
-- **Spacing (px)**: `space-0=0, 4, 8, 12, 16, 20, 24, 32, 40`
-- **Radius**: `r-0=0, r-1=6px, r-2=10px, r-3=14px, r-pill=999px`
-- **Shadows**: `sh-0=none, sh-1=0 1px 3px rgba(0,0,0,.08), sh-2=0 4px 12px rgba(0,0,0,.12)`
-- **Colors**:
-  - Ink `#0f172a`, Muted `#64748b`, Line `#e2e8f0`, BG `#ffffff`
-  - Brand `#0B5CAB`, Accent `#16a34a`, Warn `#f59e0b`, Danger `#ef4444`
-- **Breakpoints**: `sm≥640`, `md≥768`, `lg≥1024`, `xl≥1280`
-
-## Typography
-- **Scale**: `h1 26/1.2 800`, `h2 18/1.35 700`, `h3 13/1.4 700`, `body 14/1.45 400`, `caption 12/1.35 600`
-- **Families**: Inter, Segoe UI, system-ui fallback.
-- **Rules**: One `h1`/page; do not skip levels; body max line-length ~72ch.
-
-## Layout & responsiveness
-- Grid gutters use spacing tokens; page padding `space-32` desktop, `space-16` mobile.
-- Cards: `border:1px line; radius:r-3; padding:space-14`.
-- Tables: `border-collapse:collapse; th bg:#f8fafc; zebra only on data rows if needed`.
+## Design Tokens
+- **Color**
+  - ink `#0f172a`, muted `#64748b`, line `#e2e8f0`, bg `#ffffff`
+  - brand `#0B5CAB`, accent `#16a34a`, warn `#f59e0b`, danger `#ef4444`
+- **Radius**: `10–14px` for cards/buttons; chips are pill (`9999px`).
+- **Spacing**: base `8px` grid; card padding `12–16px`.
+- **Typography**: Inter/Segoe UI, 12–16px body; 24–28px headings.
+- **Number formats**: `en-MY` locale; currency **MYR** by default.
 
 ## Components
-- **Buttons**: Primary (brand bg, white text), Secondary (white bg, ink text, line border). Radius r-2. Min tap target 40×40. Disabled opacity .5.
-- **Inputs**: 12px–14px text, line border, r-2, focus ring 2px brand. Error text in Danger, 12px.
-- **Cards**: Use sh-1; no nested heavy shadows. Header label (muted 12px), value weight 600+.
-- **Modals**: Centered; overlay rgba(0,0,0,.4); ESC and click-out close (unless destructive).
-- **Toasts**: Top-right; auto-dismiss 4–6s; role="status"; focusable close button.
+- **Button**: `<button class="border rounded px-3 py-2">` primary/secondary states; disabled has `aria-disabled="true"`.
+- **Chip (Picker)**: `button[aria-pressed]` with selected visual (brand border/fill).
+- **Number Input**: right-aligned; min/max enforced; announces errors via `aria-live="polite"`.
+- **Stat Card**: label (xs, muted, uppercase), value (sm–md, semi-bold/extrabold when `strong`).
+- **Gantt (Renderer/Cockpit)**: print-safe SVG, month/ISO week bands, blackout overlays, auto-fit width/height.
 
-## Interaction rules
-- **Focus**: Always visible (`outline: 2px solid var(--brand); outline-offset: 2px`).
-- **Keyboard**: All actions reachable with Tab/Shift+Tab; Enter/Space activate buttons; ESC closes modals.
-- **Transitions**: 120–180ms opacity/transform only; no layout-affecting transitions on critical content.
-- **Resize**: Recompute Gantt size on `resize` (throttled ≥150ms).
+## Interaction Patterns
+- **Unified payload hand-off**: always use `openWithPayload(url, payload)`; receivers listen to `postMessage` with token fallback.
+- **Discount semantics**:
+  - Manday % → reduces **days**.
+  - Rate % → reduces **rate**.
+  - Rounding applied last to (impl + AMS).
+- **AMS**: fixed RM/month by default; discount optional later.
 
-## States
-- **Empty**: Title, short explainer, primary action; no dead-ends.
-- **Loading**: Skeletons or muted placeholders; avoid spinners longer than 400ms without context.
-- **Error**: Inline card with icon + actionable guidance; never modal-block without escape.
+## Accessibility
+- Focus states visible on all interactive elements.
+- Chips:
+  - Keyboard: `Tab` to focus, `Enter/Space` toggles.
+  - `aria-pressed="true|false"`, readable label text.
+- Forms: each input has a visible label; associated via `for`/`id` or wrapping `label`.
+- Live regions:
+  - Summary totals region `aria-live="polite"` for recalculation announcements (recommended).
+- Contrast:
+  - Text vs background ≥ 4.5:1; reversed text on brand tiles ≥ 4.5:1.
+- Print:
+  - Renderer/Cockpit avoid fixed pixel sizes in containers; SVG uses `viewBox` + responsive width.
 
-## Accessibility (AA)
-- Contrast ≥4.5:1 for body, ≥3:1 for large text.
-- Labels: Every control has a `<label>` or `aria-label`.
-- Announce changes: Toasts use `role="status"`. Modals use `aria-modal="true"`, `aria-labelledby`.
-- Focus trap in modals; return focus to invoker on close.
+## Error/Empty States
+- Renderer shows “Waiting for data…” until payload arrives; loads sample after timeout in dev only.
+- Cockpit shows a banner if payload missing or invalid; paste-area fallback accepted.
 
-## Enforcement
-- Shared CSS custom properties declared in both static pages and respected in JSX.
-- Lint rule: no inline hex except tokens; `data-testid` on interactive atoms used in tests.
+## Content
+- Currency prefix “RM ”; thousands separators per `en-MY`.
+- Timeline summary format: `DD Mon YYYY → DD Mon YYYY • N weeks`.
