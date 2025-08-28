@@ -1,0 +1,255 @@
+----- src/main.jsx -----
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';             // keep this import here
+import App from './App.jsx';
+
+// React Router imports for routing
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+
+// Conditionally import the proposal suite components
+import ProposalRenderer from './features/proposal/ProposalRenderer.jsx';
+import InternalCockpit from './features/proposal/InternalCockpit.jsx';
+
+// Feature flags controlled via .env (set to "true" to enable)
+const PROPOSAL_RENDERER_ENABLED =
+  import.meta.env.VITE_PROPOSAL_RENDERER_ENABLED === 'true';
+const COCKPIT_ENABLED =
+  import.meta.env.VITE_COCKPIT_ENABLED === 'true';
+
+// Render the application with routing
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <Routes>
+        {/* Main estimator */}
+        <Route path="/" element={<App />} />
+
+        {/* Client‑facing proposal (enable via .env) */}
+        {PROPOSAL_RENDERER_ENABLED && (
+          <Route
+            path="/proposal/preview"
+            element={
+              /* Replace {} with your estimator payload */
+              <ProposalRenderer payload={{}} proposalId="ABMY-23-Aug-25-001" />
+            }
+          />
+        )}
+
+        {/* Internal resource cockpit (enable via .env) */}
+        {COCKPIT_ENABLED && (
+          <Route
+            path="/proposal/cockpit"
+            element={
+              /* Replace {} with your estimator payload */
+              <InternalCockpit payload={{}} proposalId="ABMY-23-Aug-25-001" />
+            }
+          />
+        )}
+      </Routes>
+    </BrowserRouter>
+  </React.StrictMode>,
+);
+
+----- src/App.jsx -----
+// src/App.jsx
+import React, { useMemo, useState, useEffect } from "react";
+
+
+/* === Monogram Icon (replaces emojis) ===================== */
+function MonogramIcon({ text, active }) {
+  const t = (text || "").toString().slice(0, 2).toUpperCase();
+  return (
+    <span
+      className={[
+        "monoicon",
+        active ? "monoicon--active" : "monoicon--idle",
+      ].join(" ")}
+      aria-hidden="true"
+    >
+      {t}
+    </span>
+  );
+}
+/* ========================================================= */
+
+/* =========================
+   CONFIG (Guardrails)
+   ========================= */
+const MAX_MANDAY_DISCOUNT = 15; // %
+const MAX_RATE_DISCOUNT   = 10; // %
+const DEFAULT_ROUNDING    = 1;  // RM1 granularity
+const roundTo = (n, step = 1) => Math.round((+n || 0) / step) * step;
+
+const formatDateTime = (d = new Date()) => {
+  const dd  = String(d.getDate()).padStart(2, "0");
+  const mmm = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()];
+  const yyyy = d.getFullYear();
+  let hh = d.getHours();
+  const ampm = hh >= 12 ? "PM" : "AM";
+  hh = hh % 12 || 12; // 0 -> 12
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${dd}-${mmm}-${yyyy} at ${String(hh).padStart(2,"0")}:${mm} ${ampm}`;
+};
+
+/* ============================================
+   FORMS & INTERFACES
+   ============================================ */
+const FORMS = [
+  { key: "tax_invoice",    label: "Tax Invoice", days: 4, priority: "high",   malaysiaSpecific: true },
+  { key: "credit_note",    label: "Credit Note", days: 3, priority: "high",   malaysiaSpecific: false },
+  { key: "debit_note",     label: "Debit Note",  days: 3, priority: "medium", malaysiaSpecific: false },
+  { key: "purchase_order", label: "Purchase Order", days: 4, priority: "high", malaysiaSpecific: true },
+  { key: "payment_advice", label: "Payment Advice", days: 2, priority: "medium", malaysiaSpecific: true },
+  { key: "delivery_note",  label: "Delivery Note", days: 3, priority: "medium", malaysiaSpecific: false },
+  { key: "grn",            label: "Goods Receipt Note", days: 2, priority: "medium", malaysiaSpecific: false },
+  { key: "remittance",     label: "Remittance Advice", days: 2, priority: "low", malaysiaSpecific: true },
+  { key: "soa",            label: "Statement of Account", days: 3, priority: "medium", malaysiaSpecific: false },
+  { key: "wht_cert",       label: "Withholding Tax Certificate (optional)", days: 3, priority: "low", malaysiaSpecific: true },
+];
+
+const INTERFACES = [
+  { key: "if_payroll_fi",   label: "HR/Payroll → FI Posting",              days: 5, complexity: "medium" },
+  { key: "if_open_items",   label: "Legacy AR/AP Open-Items Upload",       days: 5, complexity: "low" },
+  { key: "if_bank_export",  label: "Bank Export File (payment)",           days: 5, complexity: "medium" },
+  { key: "if_sst_reporting",label: "SST Reporting to LHDN (reports)",      days: 8, complexity: "high" },
+  { key: "if_epf_socso",    label: "EPF/SOCSO Integration",                days: 6, complexity: "medium" },
+];
+
+/* ============================================
+   Industry templates
+   ============================================ */
+const INDUSTRY_TEMPLATES = {
+  none: {
+    name: "",
+    multipliers: {},
+    requiredForms: [],
+    requiredInterfaces: [],
+    additionalDays: 0,
+    description: "Start clean — you toggle only what you need",
+  },
+  general: {
+    name: "General Manufacturing",
+    multipliers: {},
+    requiredForms: ['tax_invoice', 'purchase_order', 'payment_advice'],
+    requiredInterfaces: ['if_payroll_fi'],
+    additionalDays: 10,
+    description: "Standard manufacturing processes",
+  },
+  electronics: {
+    name: "Electronics Manufacturing",
+    multipliers: { gl_aa_payments_open: 1.1, overhead_prod_margin: 1.2, trade_comp: 1.3 },
+    requiredForms: ['tax_invoice', 'purchase_order', 'delivery_note', 'grn'],
+    requiredInterfaces: ['if_payroll_fi', 'if_bank_export'],
+    additionalDays: 15,
+    description: "Export compliance & complex BOM",
+  },
+  foodProcessing: {
+    name: "Food Processing",
+    multipliers: { overhead_prod_margin: 1.3, trade_comp: 1.4, collections: 1.1 },
+    requiredForms: ['tax_invoice', 'purchase_order', 'delivery_note', 'grn', 'soa'],
+    requiredInterfaces: ['if_payroll_fi', 'if_sst_reporting'],
+    additionalDays: 20,
+    description: "HACCP & Halal workflows",
+  },
+  automotive: {
+    name: "Automotive Parts",
+    multipliers: { gl_aa_payments_open: 1.15, overhead_prod_margin: 1.25, sales_service: 1.1 },
+    requiredForms: ['tax_invoice', 'purchase_order', 'delivery_note', 'grn', 'wht_cert'],
+    requiredInterfaces: ['if_payroll_fi', 'if_bank_export', 'if_open_items'],
+    additionalDays: 18,
+    description: "JIT & quality focus",
+  },
+};
+
+/* ============================================
+   Risk factors / Tech / AMS
+   ============================================ */
+const RISK_FACTORS = {
+  clientType: { new: 1.15, existing: 1.0, returning: 0.95 },
+  migration: { greenfield: 1.0, eccMigration: 1.25, legacyMigration: 1.35 },
+  timeline: { standard: 1.0, aggressive: 1.3, relaxed: 0.9 },
+  complexity: { simple: 0.9, standard: 1.0, complex: 1.2, veryComplex: 1.4 }
+};
+const TECH = { migrationPerCycle: 20 };
+const AMS_CHOICES = [
+  { key: "ams30", label: "AMS 30d/year (3y)", daysPerYear: 30 },
+  { key: "ams40", label: "AMS 40d/year (3y)", daysPerYear: 40 },
+  { key: "ams50", label: "AMS 50d/year (3y)", daysPerYear: 50 },
+];
+
+/* ============================================
+   Functional Catalog (UNCHANGED)
+   ============================================ */
+const SG_CAPS = [
+  // ========= FINANCE =========
+  { key: "finance_base_424", label: "Finance Base Capabilities for Finance, P2P & OTC (all inclusions)", days: 424,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base", bundle: true },
+
+  { key: "fin_master_data_mgt",  label: "Financial Master Data Management", days: 193,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base" },
+
+  { key: "fin_multi_gaap_post",  label: "Financial Multi-GAAP Posting", days: 0,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base", includedIn: "finance_base_424" },
+
+  { key: "gl_general_ledger",    label: "General Ledger Accounting", days: 0,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base", includedIn: "finance_base_424" },
+
+  { key: "aa_asset_acct",        label: "Asset Accounting", days: 0,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base", includedIn: "finance_base_424" },
+
+  { key: "pay_processing",       label: "Payment Processing (payables and receivables)", days: 0,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base", includedIn: "finance_base_424" },
+
+  { key: "open_item_mgt",        label: "Open Item Management (payables and receivables)", days: 0,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base", includedIn: "finance_base_424" },
+
+  { key: "p2p_inv_acct",         label: "Procurement & Inventory Accounting", days: 90,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base" },
+
+  { key: "project_accounting",   label: "Project Accounting", days: 64,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base" },
+
+  { key: "sales_service",        label: "Sales and Service Accounting", days: 77,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base" },
+
+  { key: "overhead_cost_acct",   label: "Overhead Cost Accounting", days: 103,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base" },
+
+  { key: "prod_cost_acct",       label: "Production Cost Accounting", days: 0,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base", includedIn: "finance_base_424" },
+
+  { key: "predictive_acct",      label: "Predictive Accounting", days: 0,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base", includedIn: "finance_base_424" },
+
+  { key: "rev_cost_recog",       label: "Revenue and Cost Recognition", days: 0,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base", includedIn: "finance_base_424" },
+
+  { key: "std_prod_cost_estim",  label: "Standard Production Cost Estimation", days: 0,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base", includedIn: "finance_base_424" },
+
+  { key: "margin_analysis",      label: "Margin Analysis", days: 0,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base", includedIn: "finance_base_424" },
+
+  { key: "transfer_price_mgt",   label: "Transfer Price Management", days: 0,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base", includedIn: "finance_base_424" },
+
+  { key: "value_chain_record",   label: "Value Chain Recording", days: 0,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base", includedIn: "finance_base_424" },
+
+  { key: "lease",                label: "Lease Accounting", days: 64,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base" },
+
+  { key: "fin_lease_mgt",        label: "Financial Lease Management", days: 0,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base", includedIn: "finance_base_424" },
+
+  { key: "local_close",          label: "Local Financial Closing", days: 39,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base" },
+
+  { key: "audit_prep",           label: "Financial Audit Preparation", days: 0,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base", includedIn: "finance_base_424" },
+
+  { key: "fin_analytics",        label: "Financial Analytics", days: 0,
+    function: "Finance", product: "SAP S/4HANA Cloud Public Edition", package: "Finance Base", includedIn: "finance_base_424" },
+
+

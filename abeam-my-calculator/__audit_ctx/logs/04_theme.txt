@@ -1,0 +1,120 @@
+=== Tailwind theme ===
+import forms from '@tailwindcss/forms'
+
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,jsx,ts,tsx}",
+  ],
+  theme: { extend: {} },
+  plugins: [forms],
+}=== CSS variables ===
+src/index.css:25::root{
+src/index.css:27:  --brand-bg-1: #059669;   /* emerald-600 */
+src/index.css:28:  --brand-bg-2: #0ea5a4;   /* teal-500   */
+src/index.css:29:  --brand-accent: #8b5cf6; /* violet-500 */
+src/index.css:32:  --ink:  #0f172a;  /* slate-900 */
+src/index.css:33:  --sub:  #475569;  /* slate-600 */
+src/index.css:34:  --line: #e2e8f0;  /* slate-200 */
+src/index.css:37:  --abeam-50:  #E6EEFA;
+src/index.css:38:  --abeam-200: #B8C8EA;
+src/index.css:39:  --abeam-600: #0B2F86;
+src/index.css:40:  --abeam-700: #092C79;
+src/index.css:41:  --abeam-800: #072562;
+src/index.css:46:  --brand-bg-1: #1e3c72;
+src/index.css:47:  --brand-bg-2: #2a5298;
+src/index.css:48:  --brand-accent: #667eea;
+src/index.css:186:.focus-visible\:ring-emerald { --tw-ring-color: rgb(16 185 129 / 0.5); }
+src/App.jsx:722:    :root{
+src/App.jsx:723:      --ink:#0f172a; --sub:#475569; --line:#e2e8f0; --key:#1d4ed8; --muted:#64748b; --bg:#ffffff;
+src/App.jsx:724:      --abeam:#0B2F86;
+=== Fonts & radii ===
+src/index.css:19:@media (max-width: 420px) { html { font-size: 17px; } }  /* +~6% for small phones */
+src/index.css:20:@media (max-width: 360px) { html { font-size: 18px; } }  /* +~12% for very small phones */
+src/index.css:63:  border-radius: 10px;
+src/index.css:75:  border-radius: 10px;
+src/index.css:86:  padding:2px 8px; border-radius:9999px; border:1px solid #e5e7eb;
+src/index.css:87:  font-size:12px; font-weight:600;
+src/index.css:100:  width: .65rem; height: .65rem; border-radius: 9999px;
+src/index.css:111:  border-radius: 1rem;
+src/index.css:133:  font-size: 13px;
+src/index.css:209:.proposal-header .t1{ font-weight:800; letter-spacing:-.01em; font-size:26px; line-height:1.2; margin:0; }
+src/index.css:210:.proposal-header .t2{ color:var(--sub); font-size:13px; margin-top:4px; }
+src/index.css:214:  font-size:13px;
+src/index.css:239:  .proposal-header .t1{ font-size:22px; }
+src/index.css:240:  .proposal-header .t2{ font-size:12px; }
+src/index.css:248:  border-radius:6px;
+src/index.css:251:  font-weight:600; font-size:12px;
+src/index.css:264:  html { font-size: 12.5px; }
+src/App.jsx:492:    className={`w-11 h-6 rounded-full p-0.5 transition ${checked ? "bg-blue-600" : "bg-slate-300"}`}
+src/App.jsx:495:    <div className={`h-5 w-5 bg-white rounded-full shadow transition ${checked ? "translate-x-5" : ""}`} />
+src/App.jsx:500:    <section className={`bg-white border border-slate-200 rounded-2xl shadow-sm ${className}`}>
+src/App.jsx:508:      {footer && <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 rounded-b-2xl">{footer}</div>}
+src/App.jsx:521:        className="w-full min-w-[140px] rounded-md border border-slate-300 px-3 py-2 text-right shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+src/App.jsx:533:        className="w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+src/App.jsx:567:    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+src/App.jsx:729:      margin:0; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+src/App.jsx:746:    .t1{ font-weight:800; letter-spacing:-.01em; font-size:26px; line-height:1.2; margin:0; }
+src/App.jsx:747:    .t2{ color:var(--sub); font-size:13px; margin-top:4px; }
+src/App.jsx:748:    .contacts{ justify-self:end; text-align:right; font-size:13px; line-height:1.35; color:var(--ink); max-width:560px; overflow-wrap:anywhere; }
+src/App.jsx:754:    .proposal-hero{ background:var(--abeam); color:#fff; border-radius:14px; padding:24px; margin:18px 0 8px; display:flex; justify-content:center; align-items:center; page-break-inside: avoid; break-inside: avoid; }
+src/App.jsx:756:    .hero .big{ font-size: clamp(24px, 4.2vw, 30px); font-weight:800; margin:0 0 6px; letter-spacing:-.01em; }
+src/App.jsx:757:    .hero .sub{ font-size:clamp(12px, 2.4vw, 13px); opacity:.9; white-space:nowrap; }
+src/App.jsx:760:    .context-bar{ margin:8px 0 22px; color:var(--sub); font-size:13px; text-align:center; page-break-inside: avoid; break-inside: avoid; }
+src/App.jsx:763:    h3.section{ font-size:17px; margin:26px 0 10px; font-weight:700; letter-spacing:.01em; page-break-after: avoid; }
+src/App.jsx:766:    .card{ border:1px solid var(--line); border-radius:12px; padding:14px; background:#fff; page-break-inside: avoid; break-inside: avoid; }
+src/App.jsx:767:    .label{ color:var(--muted); font-size:12px; }
+src/App.jsx:768:    .value{ font-weight:600; font-size:14px; }
+src/App.jsx:775:    th, td{ padding:10px 12px; border-bottom:1px solid var(--line); font-size:13px; }
+src/App.jsx:785:    .note{ margin-top:14px; background:#fffbeb; border:1px solid #f59e0b; color:#92400e; padding:10px 12px; border-radius:10px; font-size:12px; }
+src/App.jsx:786:    .foot{ margin-top:28px; padding-top:16px; border-top:1px solid var(--line); text-align:center; color:var(--abeam); font-size:14px; font-weight:800; }
+src/App.jsx:795:      html { font-size: 12.5px; }
+src/App.jsx:1021:      <span style="color:#0B2F86; font-weight:800; font-size:16px; letter-spacing:.01em;">
+src/App.jsx:1053:        className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+src/App.jsx:1063:        className="px-3 py-1.5 text-sm bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition"
+src/App.jsx:1070:        className="px-3 py-1.5 text-sm bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition"
+src/App.jsx:1464:          <div className="flex rounded-full border border-slate-300 p-0.5 bg-slate-100 shrink-0">
+src/App.jsx:1466:              className={`px-3 py-1.5 rounded-full text-[14.5px] sm:text-sm ${mode === "quick" ? "bg-blue-600 text-white" : "text-slate-700 hover:bg-white"}`}
+src/App.jsx:1473:              className={`px-3 py-1.5 rounded-full text-[14.5px] sm:text-sm ${mode === "pro" ? "bg-blue-600 text-white" : "text-slate-700 hover:bg-white"}`}
+src/App.jsx:1607:                    className={`px-3 py-2 rounded-lg border text-left transition ${
+src/App.jsx:1626:                  className={`px-3 py-2 rounded-lg border transition ${
+src/App.jsx:1647:                  <label key={a.key} className={`flex items-center justify-between rounded-lg border p-2 ${selectedAMS === a.key ? "border-blue-600 bg-blue-50" : "border-slate-300 hover:bg-slate-50"}`}>
+src/App.jsx:1656:                <label className={`flex items-center justify-between rounded-lg border p-2 ${!selectedAMS ? "border-blue-600 bg-blue-50" : "border-slate-300 hover:bg-slate-50"}`}>
+src/App.jsx:1678:            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50">
+src/App.jsx:1731:              <label className="flex items-center justify-between rounded-md border border-slate-200 p-2">
+src/App.jsx:1774:        className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-right
+src/App.jsx:1880:                className={`px-4 py-2 rounded-md text-[14.5px] sm:text-sm font-medium border transition ${
+src/App.jsx:1897:      <div className="border rounded-xl p-4 bg-slate-50 mb-5 space-y-4">
+src/App.jsx:1923:            className="px-3 py-1.5 text-[14.5px] sm:text-sm border rounded-md bg-white hover:bg-slate-50"
+src/App.jsx:1941:                className={`px-3 py-1.5 rounded-full text-[14.5px] sm:text-sm border transition ${
+src/App.jsx:1958:                className="w-56 rounded-md border px-2 py-1.5 text-[14.5px] sm:text-sm"
+src/App.jsx:1960:              <button className="text-[14.5px] sm:text-sm px-2 py-1 rounded-md border hover:bg-slate-50" onClick={selectAllFiltered}>
+src/App.jsx:1963:              <button className="text-[14.5px] sm:text-sm px-2 py-1 rounded-md border hover:bg-slate-50" onClick={clearFiltered}>
+src/App.jsx:1969:          <div className="rounded-xl border bg-white max-h-[460px] overflow-auto">
+src/App.jsx:1992:          <div className="bg-slate-50 border rounded-xl p-3 h-full flex flex-col">
+src/App.jsx:2002:                  <div key={c.key} className="flex items-center justify-between bg-white border rounded-md px-2 py-1.5 text-[12.5px] sm:text-xs">
+src/App.jsx:2017:          className="px-4 py-2 text-[14.5px] sm:text-sm border rounded-md"
+src/App.jsx:2023:          className="px-4 py-2 text-[14.5px] sm:text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+src/App.jsx:2108:                    className={`px-3 py-2 rounded-lg border text-left transition ${industryTemplate === key ? "border-blue-600 bg-blue-50" : "border-slate-300 hover:bg-slate-50"}`}
+src/App.jsx:2124:                className={`px-3 py-2 rounded-lg border transition ${tier === t ? "border-blue-600 bg-blue-50" : "border-slate-300 hover:bg-slate-50"}`}
+src/App.jsx:2146:          <div className="mt-3 p-3 bg-slate-50 rounded-lg text-[14.5px] sm:text-sm text-slate-600">
+src/App.jsx:2169:            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50">
+src/App.jsx:2202:                    <label key={f.key} className="flex items-center justify-between rounded-lg border border-slate-200 p-2.5 hover:bg-slate-50">
+src/App.jsx:2228:                    <label key={i.key} className="flex items-center justify-between rounded-lg border border-slate-200 p-2.5 hover:bg-slate-50">
+src/App.jsx:2292:                <label key={a.key} className="flex items-center justify-between rounded-lg border border-slate-200 p-2.5 hover:bg-slate-50">
+src/App.jsx:2300:              <label className="flex items-center justify-between rounded-lg border border-slate-200 p-2.5 hover:bg-slate-50">
+src/App.jsx:2310:              <label className="flex items-center justify-between rounded-md border border-slate-200 p-2">
+src/App.jsx:2449:      className="text-[12.5px] sm:text-xs px-2 py-1 rounded-full border border-slate-300 hover:bg-slate-50"
+src/App.jsx:2472:              className={`px-3 py-1.5 rounded-full text-[14.5px] sm:text-sm border whitespace-nowrap transition ${activeLob === lob ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"}`}
+src/App.jsx:2489:              className="w-full rounded-md border border-slate-300 px-3 py-2 text-[14.5px] sm:text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+src/App.jsx:2493:                className="text-[14.5px] sm:text-sm px-2 rounded-md border border-slate-300 hover:bg-slate-50"
+src/App.jsx:2512:            <span className={`text-[11.5px] sm:text-[11px] px-1.5 py-0.5 rounded-full ${tier==="essential" ? "bg-slate-200 text-slate-700" : "bg-green-600 text-white"}`}>
+src/App.jsx:2541:          <div className="rounded-xl border border-slate-200 bg-white">
+src/App.jsx:2553:                      <div className={`grid grid-cols-[20px,1fr,auto] items-center gap-3 rounded-lg ${checked ? "border border-blue-400 bg-white/80" : ""} px-2 py-1.5`}>
+src/App.jsx:2566:                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${tier==="essential" ? "bg-slate-200 text-slate-700" : "bg-green-600 text-white"}`}>
+src/App.jsx:2574:                          <span className="text-[11.5px] sm:text-[11px] font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-full px-2 py-0.5">
+src/App.jsx:2586:                        <div className="flex items-center justify-end rounded-md border border-slate-200 bg-slate-50 px-2 py-1">
+src/App.jsx:2603:                        <div className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-2 py-1">
+src/App.jsx:2618:                        <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[12.5px] sm:text-xs text-slate-600">
+src/App.jsx:2632:          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sticky top-24">
+src/App.jsx:2649:                  <div key={c.key} className="flex items-center justify-between bg-white border border-slate-200 rounded-md px-2 py-1.5">
