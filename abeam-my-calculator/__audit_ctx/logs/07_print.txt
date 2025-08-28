@@ -1,0 +1,7 @@
+=== Print CSS ===
+src/index.css:259:@page { size: A4 portrait; margin: 14mm 14mm 16mm; }
+src/index.css:261:   @page { size: A4 landscape; margin: 14mm 14mm 16mm; }
+src/index.css:263:@media print{
+src/App.jsx:793:    @page { size: A4 portrait; margin: 14mm 14mm 16mm; } /* change to landscape if you ever need it */
+src/App.jsx:794:    @media print{
+=== PDF libs ===

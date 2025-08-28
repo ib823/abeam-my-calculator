@@ -1,0 +1,293 @@
+=== Terms ===
+src/utils/adapters.js:5:// phases, milestones, commercials and audit information because the
+src/utils/adapters.js:11: *   based on percentage splits of total mandays.
+src/utils/adapters.js:12: * - Generates a milestones schedule.
+src/utils/adapters.js:13: * - Calculates commercials (base, discount, net).
+src/utils/adapters.js:27:  const totalMandays = payload.totalMandays ?? 0;
+src/utils/adapters.js:29:  const discountPct  = payload.discount ?? 0;
+src/utils/adapters.js:37:  // Phase splits (percentage of total mandays)
+src/utils/adapters.js:51:    const md           = totalMandays * pct;
+src/utils/adapters.js:59:      mandays: Math.round(md)
+src/utils/adapters.js:65:  const baseFees   = totalMandays * rate;
+src/utils/adapters.js:66:  const discount   = baseFees * (discountPct / 100);
+src/utils/adapters.js:67:  const netFees    = baseFees - discount;
+src/utils/adapters.js:70:      label: `Professional Services (${totalMandays} md @ RM${rate.toLocaleString(undefined, { minimumFractionDigits: 2 })})`,
+src/utils/adapters.js:71:      base:    baseFees.toLocaleString(undefined, { minimumFractionDigits: 2 }),
+src/utils/adapters.js:72:      percent: discountPct,
+src/utils/adapters.js:73:      amount:  discount.toLocaleString(undefined, { minimumFractionDigits: 2 }),
+src/utils/adapters.js:74:      net:     netFees.toLocaleString(undefined, { minimumFractionDigits: 2 }),
+src/utils/adapters.js:75:      notes:   "Manday discount"
+src/utils/adapters.js:82:      net:    netFees.toLocaleString(undefined, { minimumFractionDigits: 2 }),
+src/utils/adapters.js:87:  // Milestones schedule (hard-coded percentages)
+src/utils/adapters.js:88:  const milestones = [
+src/utils/adapters.js:89:    { name: "Contract Signing", when: "T0",               amount: "20% of project fees", notes: "Mobilization" },
+src/utils/adapters.js:90:    { name: "Discover Complete", when: "Week 4",         amount: "15% of project fees", notes: "Sign-off" },
+src/utils/adapters.js:91:    { name: "Explore Complete",  when: "Week 10",        amount: "20% of project fees", notes: "Fit-to-Standard sign-off" },
+src/utils/adapters.js:92:    { name: "Realize Complete",  when: "Week 20",        amount: "25% of project fees", notes: "Integration/UAT sign-off" },
+src/utils/adapters.js:93:    { name: "Go-Live",           when: "Week 28–32",     amount: "15% of project fees", notes: "Handover" },
+src/utils/adapters.js:94:    { name: "Run Complete",      when: "Post go-live",   amount: "5% of project fees",  notes: "Closure" }
+src/utils/adapters.js:107:      totalMandays,
+src/utils/adapters.js:109:      totalCost: netFees,
+src/utils/adapters.js:115:    milestones,
+src/features/proposal/ProposalRenderer.jsx:27:            <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{dto.meta.totalMandays.toLocaleString()}</div>
+src/features/proposal/ProposalRenderer.jsx:28:            <div>Mandays (est.)</div>
+src/features/proposal/ProposalRenderer.jsx:46:      {/* Commercials & Investment */}
+src/features/proposal/ProposalRenderer.jsx:48:        <h2>Commercials & Investment</h2>
+src/features/proposal/ProposalRenderer.jsx:54:              <th style={{ border: '1px solid #e2e8f0', padding: '6px 8px' }}>Discount % / Amt</th>
+src/features/proposal/ProposalRenderer.jsx:74:        {/* Milestones */}
+src/features/proposal/ProposalRenderer.jsx:75:        <h3 style={{ marginTop: '16px' }}>Milestones & Payments</h3>
+src/features/proposal/ProposalRenderer.jsx:79:              <th style={{ border: '1px solid #e2e8f0', padding: '6px 8px' }}>Milestone</th>
+src/features/proposal/ProposalRenderer.jsx:86:            {dto.milestones.map((m, idx) => (
+src/features/proposal/ProposalRenderer.jsx:102:          <h3>Status & Governing Law</h3>
+src/features/proposal/ProposalRenderer.jsx:104:          <p><strong>Governing Law (Malaysia):</strong> Disputes are subject to Malaysian law and jurisdiction. If the contracting entity is outside Malaysia, the governing law/venue is subject to mutual agreement in the definitive contract.</p>
+src/features/proposal/ProposalRenderer.jsx:108:          <p>Total liability is capped at fees paid for the services giving rise to the claim. Neither party is liable for indirect, incidental, punitive or consequential damages, loss of profits or data.</p>
+src/features/proposal/ProposalRenderer.jsx:112:          <p>Both parties shall comply with PDPA (Malaysia). Cross‑border transfers are handled in accordance with PDPA section 129 and Cross‑Border Transfer Guidelines. Where EU/UK data is involved, GDPR‑compliant safeguards apply.</p>
+src/features/proposal/ProposalRenderer.jsx:124:          <p>Fees are exclusive of taxes. Malaysian SST (8% effective 1 Mar 2024) applies where relevant. Payments to non‑residents may be subject to withholding under the Income Tax Act 1967 (s.109B).</p>
+src/features/proposal/InternalCockpit.jsx:162:        Adjust phase dates and allocate resources. Pricing remains tied to total mandays;
+src/App.jsx:25:const MAX_MANDAY_DISCOUNT = 15; // %
+src/App.jsx:26:const MAX_RATE_DISCOUNT   = 10; // %
+src/App.jsx:54:  { key: "wht_cert",       label: "Withholding Tax Certificate (optional)", days: 3, priority: "low", malaysiaSpecific: true },
+src/App.jsx:61:  { key: "if_sst_reporting",label: "SST Reporting to LHDN (reports)",      days: 8, complexity: "high" },
+src/App.jsx:97:    requiredInterfaces: ['if_payroll_fi', 'if_sst_reporting'],
+src/App.jsx:180:  { key: "transfer_price_mgt",   label: "Transfer Price Management", days: 0,
+src/App.jsx:631:  // Build the full HTML (keeps your theme + numbers + discounts exactly)
+src/App.jsx:652:    // Discounts
+src/App.jsx:655:    const mdAmt     = N(s.mandayDiscountAmount);
+src/App.jsx:656:    const rtAmt     = N(s.rateDiscountAmount);
+src/App.jsx:658:    const hasImplDiscount =
+src/App.jsx:678:    // AMS (with discount)
+src/App.jsx:681:    const amsBasePrice   = N(s.amsBasePrice);
+src/App.jsx:683:    const amsPrice       = N(s.amsFinalPrice ?? s.amsPrice);
+src/App.jsx:684:    const amsPct         = N(s.amsDiscountPct);
+src/App.jsx:685:    const amsDaysDelta   = N(s.amsDiscountDaysDelta);
+src/App.jsx:686:    const amsDiscAmt     = N(s.amsDiscountAmount);
+src/App.jsx:687:    const hasAMS         = amsPrice > 0;
+src/App.jsx:688:    const hasAMSDiscount = amsPct > 0 && amsDiscAmt > 0 && amsBaseDays > 0;
+src/App.jsx:778:    .row-discount td{ color:#065f46; background:#ecfdf5; }
+src/App.jsx:843:          ${num(finalDays)} mandays • ${num(s.timelineWeeks)} weeks • ${num(s.teamSize)} ABeam Team Members • Utilization ${num(s.utilization)}%
+src/App.jsx:870:    <!-- Effort Breakdown (Mandays) -->
+src/App.jsx:871:    <h3 class="section">Effort Breakdown (Mandays)</h3>
+src/App.jsx:894:          <tr class="strong"><td>Total Implementation Mandays</td><td class="right">${num(finalDays)} d</td></tr>
+src/App.jsx:909:            hasImplDiscount
+src/App.jsx:918:                  <tr class="row-discount">
+src/App.jsx:919:                    <td>Less: Manday Discount (${num(mandayPct)}%)</td>
+src/App.jsx:925:                  <tr class="row-discount">
+src/App.jsx:926:                    <td>Less: Rate Discount (${num(ratePct)}%)</td>
+src/App.jsx:951:                  hasAMSDiscount
+src/App.jsx:957:                        <td class="right">RM ${num(amsBasePrice)}</td>
+src/App.jsx:959:                      <tr class="row-discount">
+src/App.jsx:960:                        <td>Less: AMS Discount (${num(amsPct)}%)</td>
+src/App.jsx:969:                        <td class="right">RM ${num(amsPrice)}</td>
+src/App.jsx:977:                        <td class="right">RM ${num(amsPrice)}</td>
+src/App.jsx:993:    <div class="t2" style="margin-top:8px">Rounding step: RM ${num(rounding)}. All figures include configured discounts and rounding.</div>
+src/App.jsx:1122:  const [allowMandayDiscount, setAllowMandayDiscount] = useState(true);
+src/App.jsx:1123:  const [mandayDiscountPct, setMandayDiscountPct] = useState(0);
+src/App.jsx:1124:  const [rateDiscountPct, setRateDiscountPct] = useState(0);
+src/App.jsx:1133:  const [amsDiscountPct, setAmsDiscountPct] = useState(15);
+src/App.jsx:1252:  const sgFunctionalPriceMYR = useMemo(
+src/App.jsx:1285:  const myTotalMandaysRaw = myFunctionalDays + formsDays + ifDays + technicalDays + wrapperDays;
+src/App.jsx:1292:  const myTotalMandaysWithRisk = Math.round(myTotalMandaysRaw * riskMultiplier);
+src/App.jsx:1293:  const myMandayDiscountFactor = 1 - (allowMandayDiscount ? (mandayDiscountPct / 100) : 0);
+src/App.jsx:1294:  const myRateDiscountFactor   = 1 - (rateDiscountPct / 100);
+src/App.jsx:1296:  const myTotalMandays = Math.round(myTotalMandaysWithRisk * myMandayDiscountFactor);
+src/App.jsx:1297:  const myProjectRate  = Math.round(myRate * myRateDiscountFactor);
+src/App.jsx:1298:  const myProjectPrice = roundTo(myTotalMandays * myProjectRate, rounding);
+src/App.jsx:1300:  const timelineWeeks  = Math.ceil(myTotalMandays / (Math.max(1, teamSize) * Math.max(1, workingDaysPerWeek)));
+src/App.jsx:1302:  const capacityMandays = Math.max(1, teamSize) * Math.max(1, workingDaysPerWeek) * Math.max(1, timelineWeeks);
+src/App.jsx:1303:  const utilizationPct = Math.min(100, Math.round((myTotalMandays / capacityMandays) * 100));
+src/App.jsx:1307:  if (!selectedAMS) return { days: 0, price: 0, baseDays: 0, basePrice: 0 };
+src/App.jsx:1310:  const discountedDays = Math.round(baseDays * (1 - amsDiscountPct / 100));
+src/App.jsx:1311:  const basePrice = roundTo(baseDays * amsRate, rounding);
+src/App.jsx:1312:  const price = roundTo(discountedDays * amsRate, rounding);
+src/App.jsx:1313:  return { days: discountedDays, price, baseDays, basePrice };
+src/App.jsx:1314:}, [selectedAMS, amsDiscountPct, amsRate, rounding]);
+src/App.jsx:1316:  const grandTotal = myProjectPrice + (includeAMSInTotal ? amS.price : 0);
+src/App.jsx:1320:  if (allowMandayDiscount && mandayDiscountPct > MAX_MANDAY_DISCOUNT) warnings.push(`Manday discount ${mandayDiscountPct}% exceeds policy cap of ${MAX_MANDAY_DISCOUNT}%. Approval required.`);
+src/App.jsx:1321:  if (rateDiscountPct > MAX_RATE_DISCOUNT) warnings.push(`Rate discount ${rateDiscountPct}% exceeds policy cap of ${MAX_RATE_DISCOUNT}%. Approval required.`);
+src/App.jsx:1324:  if (myTotalMandays > 800) warnings.push("Large scope — consider phased approach.");
+src/App.jsx:1335:      discounts: { manday: mandayDiscountPct, rate: rateDiscountPct, ams: amsDiscountPct },
+src/App.jsx:1342:      totalMandays: myTotalMandays,
+src/App.jsx:1344:      projectPrice: myProjectPrice,
+src/App.jsx:1353:const baseDays = myTotalMandaysWithRisk;               // before any discount
+src/App.jsx:1354:const baseRate = myRate;                                // before rate discount
+src/App.jsx:1355:const finalDays = myTotalMandays;                       // after manday discount
+src/App.jsx:1356:const finalRate = myProjectRate;                        // after rate discount
+src/App.jsx:1358:const mandayPct = allowMandayDiscount ? Number(mandayDiscountPct) : 0;
+src/App.jsx:1359:const ratePct   = Number(rateDiscountPct);
+src/App.jsx:1361:const mandayDaysDelta = Math.max(0, baseDays - finalDays);     // days reduced by manday discount
+src/App.jsx:1362:const ratePerDayDelta = Math.max(0, baseRate - finalRate);     // rate reduced by rate discount
+src/App.jsx:1365:const mandayDiscountAmount   = roundTo(mandayDaysDelta * baseRate, rounding);
+src/App.jsx:1366:const rateDiscountAmount     = roundTo(ratePerDayDelta * finalDays, rounding);
+src/App.jsx:1367:const implementationSubtotal = roundTo(baseAmount - mandayDiscountAmount - rateDiscountAmount, rounding);
+src/App.jsx:1368:const grandTotalPDF          = roundTo(implementationSubtotal + (includeAMSInTotal ? amS.price : 0), rounding);
+src/App.jsx:1371:const pdfCapacityMandays = Math.max(1, teamSize) * Math.max(1, workingDaysPerWeek) * Math.max(1, timelineWeeks);
+src/App.jsx:1372:const pdfUtilizationPct  = Math.min(100, Math.round((myTotalMandays / pdfCapacityMandays) * 100));
+src/App.jsx:1378:const amsBasePrice = roundTo(amsBaseDays * amsRate, rounding);
+src/App.jsx:1379:const amsDiscountDaysDelta = Math.max(0, amsBaseDays - (amS.days || 0));
+src/App.jsx:1380:const amsDiscountAmount    = Math.max(0, amsBasePrice - (amS.price || 0));
+src/App.jsx:1403:  projectPrice: myProjectPrice,
+src/App.jsx:1405:  amsPrice: amS.price,
+src/App.jsx:1415:  // discounts
+src/App.jsx:1420:  mandayDiscountAmount,
+src/App.jsx:1421:  rateDiscountAmount,
+src/App.jsx:1429:  amsDiscountPct: amsDiscountPct,  // the % from your AMS control
+src/App.jsx:1430:  amsBaseDays,             // before discount
+src/App.jsx:1431:  amsBasePrice,            // before discount
+src/App.jsx:1432:  amsFinalDays: amS.days,  // after discount
+src/App.jsx:1433:  amsFinalPrice: amS.price,
+src/App.jsx:1434:  amsDiscountDaysDelta,    // days removed by discount
+src/App.jsx:1435:  amsDiscountAmount,       // RM reduced by discount
+src/App.jsx:1438:  sgFunctionalPriceMYR: Math.round(sgFunctionalPriceMYR),
+src/App.jsx:1492:          amsDiscountPct={amsDiscountPct}
+src/App.jsx:1493:          setAmsDiscountPct={setAmsDiscountPct}
+src/App.jsx:1500:          myProjectPrice={myProjectPrice}
+src/App.jsx:1501:          myTotalMandays={myTotalMandays}
+src/App.jsx:1543:          allowMandayDiscount={allowMandayDiscount} setAllowMandayDiscount={setAllowMandayDiscount}
+src/App.jsx:1544:          mandayDiscountPct={mandayDiscountPct} setMandayDiscountPct={setMandayDiscountPct}
+src/App.jsx:1545:          rateDiscountPct={rateDiscountPct} setRateDiscountPct={setRateDiscountPct}
+src/App.jsx:1551:          amsDiscountPct={amsDiscountPct} setAmsDiscountPct={setAmsDiscountPct}
+src/App.jsx:1554:          sgFunctionalPriceMYR={Math.round(sgFunctionalPriceMYR)}
+src/App.jsx:1559:          myTotalMandays={myTotalMandays}
+src/App.jsx:1561:          myProjectPrice={myProjectPrice}
+src/App.jsx:1582:    selectedAMS, setSelectedAMS, amsDiscountPct, setAmsDiscountPct, amsRate, setAmsRate,
+src/App.jsx:1584:    myProjectPrice, myTotalMandays, timelineWeeks, timelineMonths,
+src/App.jsx:1592:  ? myProjectPrice + (amS?.price || 0) 
+src/App.jsx:1593:  : myProjectPrice;
+src/App.jsx:1664:                    <Range label="AMS Discount" value={amsDiscountPct} setValue={setAmsDiscountPct} min={0} max={25} />
+src/App.jsx:1720:                <span className="text-[14.5px] sm:text-sm text-slate-700">Total Mandays</span>
+src/App.jsx:1721:                <span className="text-base font-semibold"><Num value={myTotalMandays} /> d</span>
+src/App.jsx:1724:                <span className="text-[14.5px] sm:text-sm text-slate-700">Project Price</span>
+src/App.jsx:1725:                <span className="text-[20px] sm:text-lg font-bold text-slate-900">RM <Num value={myProjectPrice} /></span>
+src/App.jsx:1729:                <span className="text-[14.5px] sm:text-sm font-medium">RM <Num value={amS.price} /> <span className="text-[12.5px] sm:text-xs text-slate-500">({amS.days} d)</span></span>
+src/App.jsx:1744:                  RM <Num value={myProjectPrice + (includeAMSInTotal ? amS.price : 0)} />
+src/App.jsx:2064:    allowMandayDiscount, setAllowMandayDiscount,
+src/App.jsx:2065:    mandayDiscountPct, setMandayDiscountPct,
+src/App.jsx:2066:    rateDiscountPct, setRateDiscountPct,
+src/App.jsx:2074:    amsDiscountPct, setAmsDiscountPct,
+src/App.jsx:2081:    sgFunctionalPriceMYR,
+src/App.jsx:2086:    myTotalMandays,
+src/App.jsx:2088:    myProjectPrice,
+src/App.jsx:2252:        <Card title="Commercial & Rates" subtitle="Base rates, discounts, rounding.">
+src/App.jsx:2263:  label="Manday Discount"
+src/App.jsx:2264:  value={mandayDiscountPct}
+src/App.jsx:2265:  setValue={setMandayDiscountPct}
+src/App.jsx:2270:      {mandayDiscountPct > 10 && (
+src/App.jsx:2278:  label="Rate Discount"
+src/App.jsx:2279:  value={rateDiscountPct}
+src/App.jsx:2280:  setValue={setRateDiscountPct}
+src/App.jsx:2288:              <Card title="AMS Bundle (3-year)" subtitle="Offer 30–50 days/year with discount">
+src/App.jsx:2309:              <Range label="AMS Discount" value={amsDiscountPct} setValue={setAmsDiscountPct} min={0} max={25} />
+src/App.jsx:2320:                AMS Price: <span className="font-semibold">RM <Num value={amS.price} /></span>
+src/App.jsx:2359:                <span className="text-[14.5px] sm:text-sm text-slate-700">Total Mandays</span>
+src/App.jsx:2360:                <span className="text-base font-semibold"><Num value={myTotalMandays} /> d</span>
+src/App.jsx:2363:                <span className="text-[14.5px] sm:text-sm text-slate-700">Project Price</span>
+src/App.jsx:2364:                <span className="text-[20px] sm:text-lg font-bold text-slate-900">RM <Num value={myProjectPrice} /></span>
+src/App.jsx:2368:                <span className="text-[14.5px] sm:text-sm font-medium">RM <Num value={amS.price} /> <span className="text-[12.5px] sm:text-xs text-slate-500">({amS.days} d)</span></span>
+src/App.jsx:2373:                  RM <Num value={myProjectPrice + (includeAMSInTotal ? amS.price : 0)} />
+src/App.jsx:2377:                SG ref: <Num value={sgFunctionalDays} /> d • RM <Num value={sgFunctionalPriceMYR} />
+=== Currency=== 
+src/utils/adapters.js:5:// phases, milestones, commercials and audit information because the
+src/utils/adapters.js:70:      label: `Professional Services (${totalMandays} md @ RM${rate.toLocaleString(undefined, { minimumFractionDigits: 2 })})`,
+src/utils/adapters.js:111:      currency: "MYR"
+src/features/proposal/ProposalRenderer.jsx:32:              RM {Number(dto.meta.totalCost).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+src/features/proposal/ProposalRenderer.jsx:53:              <th style={{ border: '1px solid #e2e8f0', padding: '6px 8px' }}>Base (RM)</th>
+src/features/proposal/ProposalRenderer.jsx:55:              <th style={{ border: '1px solid #e2e8f0', padding: '6px 8px' }}>Net (RM)</th>
+src/features/proposal/InternalCockpit.jsx:80:    // Determine overall project window
+src/index.css:149:@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+src/App.jsx:27:const DEFAULT_ROUNDING    = 1;  // RM1 granularity
+src/App.jsx:30:const formatDateTime = (d = new Date()) => {
+src/App.jsx:42:   FORMS & INTERFACES
+src/App.jsx:44:const FORMS = [
+src/App.jsx:72:    requiredForms: [],
+src/App.jsx:80:    requiredForms: ['tax_invoice', 'purchase_order', 'payment_advice'],
+src/App.jsx:88:    requiredForms: ['tax_invoice', 'purchase_order', 'delivery_note', 'grn'],
+src/App.jsx:96:    requiredForms: ['tax_invoice', 'purchase_order', 'delivery_note', 'grn', 'soa'],
+src/App.jsx:104:    requiredForms: ['tax_invoice', 'purchase_order', 'delivery_note', 'grn', 'wht_cert'],
+src/App.jsx:208:  { key: "tax_det_calc",         label: "Tax Determination and Calculation", days: 0,
+src/App.jsx:258:  { key: "prm_project_sched_129", label: "Project Schedule Management", days: 129,
+src/App.jsx:261:  { key: "prm_subscription_billing_90", label: "Subscription Billing — Consumption/Usage/Subscription Mgmt", days: 90,
+src/App.jsx:336:    function: "HCM", product: "SAP SuccessFactors", package: "Pay for Performance Add-On" },
+src/App.jsx:338:  { key: "hcm_performance_goals_57", label: "Performance & Goals", days: 57,
+src/App.jsx:339:    function: "HCM", product: "SAP SuccessFactors", package: "Pay for Performance Add-On" },
+src/App.jsx:354:  { key: "ariba_supplier_lifecycle_64", label: "Supplier Lifecycle & Performance", days: 64,
+src/App.jsx:385:  { key: "cx_cdp_b2b_90", label: "Customer Data Platform — B2B", days: 90,
+src/App.jsx:394:  { key: "cx_cdp_b2c_90", label: "Customer Data Platform — B2C", days: 90,
+src/App.jsx:484:  "prm_project_sched_129"
+src/App.jsx:636:    const rm  = (v) =>
+src/App.jsx:637:      new Intl.NumberFormat("en-MY", {
+src/App.jsx:638:        style: "currency", currency: "MYR", maximumFractionDigits: 0
+src/App.jsx:639:      }).format(N(v));
+src/App.jsx:692:    const forms        = Array.isArray(s.selectedForms) ? s.selectedForms : [];
+src/App.jsx:702:    const generatedAt = (typeof formatDateTime === "function")
+src/App.jsx:703:      ? formatDateTime(new Date())
+src/App.jsx:714:  <meta name="format-detection" content="telephone=no, address=no, email=no" />
+src/App.jsx:792:    /* ===== PRINT: normalize PDF output ===== */
+src/App.jsx:841:        <div class="big">${rm(grandTotal)}</div>
+src/App.jsx:905:          <tr><th>Item</th><th class="right">Qty/Days</th><th class="right">Rate</th><th class="right">Amount (RM)</th></tr>
+src/App.jsx:914:                  <td class="right">RM ${num(baseRate)}</td>
+src/App.jsx:915:                  <td class="right">RM ${num(baseAmount)}</td>
+src/App.jsx:921:                    <td class="right">RM ${num(baseRate)}</td>
+src/App.jsx:922:                    <td class="right">– RM ${num(mdAmt)}</td>
+src/App.jsx:928:                    <td class="right">→ RM ${num(finalRate)}</td>
+src/App.jsx:929:                    <td class="right">– RM ${num(rtAmt)}</td>
+src/App.jsx:934:                  <td class="right">RM ${num(finalRate)}</td>
+src/App.jsx:935:                  <td class="right">RM ${num(implSub)}</td>
+src/App.jsx:942:                  <td class="right">RM ${num(finalRate)}</td>
+src/App.jsx:943:                  <td class="right">RM ${num(implSub)}</td>
+src/App.jsx:956:                        <td class="right">RM ${num(amsRate)}</td>
+src/App.jsx:957:                        <td class="right">RM ${num(amsBasePrice)}</td>
+src/App.jsx:962:                        <td class="right">RM ${num(amsRate)}</td>
+src/App.jsx:963:                        <td class="right">– RM ${num(amsDiscAmt)}</td>
+src/App.jsx:968:                        <td class="right">RM ${num(amsRate)}</td>
+src/App.jsx:969:                        <td class="right">RM ${num(amsPrice)}</td>
+src/App.jsx:976:                        <td class="right">RM ${num(amsRate)}</td>
+src/App.jsx:977:                        <td class="right">RM ${num(amsPrice)}</td>
+src/App.jsx:987:            <td class="right">RM ${num(grandTotal)}</td>
+src/App.jsx:993:    <div class="t2" style="margin-top:8px">Rounding step: RM ${num(rounding)}. All figures include configured discounts and rounding.</div>
+src/App.jsx:1005:        <div class="label">Forms</div>
+src/App.jsx:1007:          ${forms.length ? forms.map(x => `<div>• ${x}</div>`).join("") : "—"}
+src/App.jsx:1099:  const [selectedForms, setSelectedForms] = useState(new Set(["tax_invoice","credit_note","debit_note","purchase_order","payment_advice","remittance"]));
+src/App.jsx:1120:  const [myRate, setMyRate] = useState(2000);
+src/App.jsx:1216:    setSelectedForms(new Set(cfg.requiredForms));
+src/App.jsx:1252:  const sgFunctionalPriceMYR = useMemo(
+src/App.jsx:1279:  const formsDays = useMemo(() => FORMS.filter(f => selectedForms.has(f.key)).reduce((a, b) => a + b.days, 0), [selectedForms]);
+src/App.jsx:1285:  const myTotalMandaysRaw = myFunctionalDays + formsDays + ifDays + technicalDays + wrapperDays;
+src/App.jsx:1294:  const myRateDiscountFactor   = 1 - (rateDiscountPct / 100);
+src/App.jsx:1297:  const myProjectRate  = Math.round(myRate * myRateDiscountFactor);
+src/App.jsx:1331:      selectedForms: Array.from(selectedForms),
+src/App.jsx:1334:      rates: { sgRate, fx, myRate, amsRate },
+src/App.jsx:1340:      fricewDays: formsDays + ifDays,
+src/App.jsx:1354:const baseRate = myRate;                                // before rate discount
+src/App.jsx:1397:  fricewDays: formsDays + ifDays,
+src/App.jsx:1435:  amsDiscountAmount,       // RM reduced by discount
+src/App.jsx:1438:  sgFunctionalPriceMYR: Math.round(sgFunctionalPriceMYR),
+src/App.jsx:1442:  selectedForms: FORMS.filter(f => selectedForms.has(f.key)).map(f => f.label),
+src/App.jsx:1536:          selectedForms={selectedForms} setSelectedForms={setSelectedForms}
+src/App.jsx:1540:          myRate={myRate} setMyRate={setMyRate}
+src/App.jsx:1554:          sgFunctionalPriceMYR={Math.round(sgFunctionalPriceMYR)}
+src/App.jsx:1556:          formsDays={formsDays} ifDays={ifDays}
+src/App.jsx:1665:                    <Field label="AMS Rate (RM/day)" value={amsRate} setValue={setAmsRate} />
+src/App.jsx:1725:                <span className="text-[20px] sm:text-lg font-bold text-slate-900">RM <Num value={myProjectPrice} /></span>
+src/App.jsx:1729:                <span className="text-[14.5px] sm:text-sm font-medium">RM <Num value={amS.price} /> <span className="text-[12.5px] sm:text-xs text-slate-500">({amS.days} d)</span></span>
+src/App.jsx:1744:                  RM <Num value={myProjectPrice + (includeAMSInTotal ? amS.price : 0)} />
+src/App.jsx:2056:    selectedForms, setSelectedForms,
+src/App.jsx:2061:    myRate, setMyRate,
+src/App.jsx:2081:    sgFunctionalPriceMYR,
+src/App.jsx:2083:    formsDays, ifDays,
+src/App.jsx:2194:        <Card title="Forms & Interfaces (FRICEW)" subtitle="Keep the essentials. Add only what matters.">
+src/App.jsx:2197:              <div className="text-[14.5px] sm:text-sm font-medium mb-2">Forms</div>
+src/App.jsx:2199:                {FORMS.map(f => {
+src/App.jsx:2200:                  const checked = selectedForms.has(f.key);
+src/App.jsx:2209:                            const ns = new Set(selectedForms);
+src/App.jsx:2211:                            setSelectedForms(ns);
+src/App.jsx:2255:            <Field label="FX SGD→MYR" value={fx} setValue={setFx} step="0.01" />
+src/App.jsx:2256:            <Field label="MY Project Rate (RM/day)" value={myRate} setValue={setMyRate} />
+src/App.jsx:2257:            <Field label="AMS Rate (RM/day)" value={amsRate} setValue={setAmsRate} />
+src/App.jsx:2258:            <Field label="Rounding (RM)" value={rounding} setValue={setRounding} />
+src/App.jsx:2320:                AMS Price: <span className="font-semibold">RM <Num value={amS.price} /></span>
+src/App.jsx:2348:                <span className="text-[14.5px] sm:text-sm font-medium"><Num value={formsDays + ifDays} /> d</span>
+src/App.jsx:2364:                <span className="text-[20px] sm:text-lg font-bold text-slate-900">RM <Num value={myProjectPrice} /></span>
+src/App.jsx:2368:                <span className="text-[14.5px] sm:text-sm font-medium">RM <Num value={amS.price} /> <span className="text-[12.5px] sm:text-xs text-slate-500">({amS.days} d)</span></span>
+src/App.jsx:2373:                  RM <Num value={myProjectPrice + (includeAMSInTotal ? amS.price : 0)} />
+src/App.jsx:2377:                SG ref: <Num value={sgFunctionalDays} /> d • RM <Num value={sgFunctionalPriceMYR} />
+=== Dates ===

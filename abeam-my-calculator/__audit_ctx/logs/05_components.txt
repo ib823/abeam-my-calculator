@@ -1,0 +1,69 @@
+=== Buttons ===
+src/features/proposal/InternalCockpit.jsx:181:            <button
+src/features/proposal/InternalCockpit.jsx:194:            <button
+src/features/proposal/InternalCockpit.jsx:215:            <button
+src/features/proposal/InternalCockpit.jsx:228:            <button
+src/features/proposal/InternalCockpit.jsx:241:            <button onClick={() => handleAddRole(ph.name)}>Add Role</button>
+src/features/proposal/InternalCockpit.jsx:321:        <button onClick={exportCSV}>Export CSV</button>
+src/features/proposal/InternalCockpit.jsx:323:        <button onClick={copyIKM}>Copy IKM Capsule</button>
+src/App.jsx:490:  <button
+src/App.jsx:1051:      <button
+src/App.jsx:1058:      <button
+src/App.jsx:1068:      <button
+src/App.jsx:1465:            <button
+src/App.jsx:1472:            <button
+src/App.jsx:1605:                  <button
+src/App.jsx:1624:                <button
+src/App.jsx:1878:              <button
+src/App.jsx:1922:          <button
+src/App.jsx:1939:              <button
+src/App.jsx:1960:              <button className="text-[14.5px] sm:text-sm px-2 py-1 rounded-md border hover:bg-slate-50" onClick={selectAllFiltered}>
+src/App.jsx:1963:              <button className="text-[14.5px] sm:text-sm px-2 py-1 rounded-md border hover:bg-slate-50" onClick={clearFiltered}>
+src/App.jsx:2004:                    <button className="text-[11px] text-red-600 hover:underline" onClick={() => toggleCap(c.key)}>
+src/App.jsx:2016:        <button
+src/App.jsx:2022:        <button
+src/App.jsx:2106:                  <button
+src/App.jsx:2122:              <button
+src/App.jsx:2446:    <button
+src/App.jsx:2470:            <button
+src/App.jsx:2492:              <button
+src/App.jsx:2635:              <button
+src/App.jsx:2651:                    <button
+=== Inputs ===
+src/features/proposal/ProposalRenderer.jsx:161:        <textarea
+src/features/proposal/InternalCockpit.jsx:175:              <input
+src/features/proposal/InternalCockpit.jsx:209:              <input
+src/features/proposal/InternalCockpit.jsx:272:          <input
+src/features/proposal/InternalCockpit.jsx:286:          <input
+src/features/proposal/InternalCockpit.jsx:301:            <input
+src/App.jsx:516:      <input
+src/App.jsx:530:      <select
+src/App.jsx:551:      <input
+src/App.jsx:1649:                      <input type="radio" name="ams" checked={selectedAMS === a.key} onChange={() => setSelectedAMS(a.key)} />
+src/App.jsx:1658:                    <input type="radio" name="ams" checked={!selectedAMS} onChange={() => setSelectedAMS(null)} />
+src/App.jsx:1733:                <input
+src/App.jsx:1769:      <input
+src/App.jsx:1899:          <input
+src/App.jsx:1953:              <input
+src/App.jsx:1976:                  <input
+src/App.jsx:2141:            <SelectField label="Client Type" value={clientType} setValue={setClientType} options={Object.keys(RISK_FACTORS.clientType)} />
+src/App.jsx:2142:            <SelectField label="Migration Type" value={migrationType} setValue={setMigrationType} options={Object.keys(RISK_FACTORS.migration)} />
+src/App.jsx:2143:            <SelectField label="Timeline Pressure" value={timelineType} setValue={setTimelineType} options={Object.keys(RISK_FACTORS.timeline)} />
+src/App.jsx:2144:            <SelectField label="Complexity" value={complexityLevel} setValue={setComplexityLevel} options={Object.keys(RISK_FACTORS.complexity)} />
+src/App.jsx:2204:                        <input
+src/App.jsx:2230:                        <input
+src/App.jsx:2294:                    <input type="radio" name="ams" className="h-4 w-4" checked={selectedAMS === a.key} onChange={() => setSelectedAMS(a.key)} />
+src/App.jsx:2302:                  <input type="radio" name="ams" className="h-4 w-4" checked={!selectedAMS} onChange={() => setSelectedAMS(null)} />
+src/App.jsx:2312:                <input
+src/App.jsx:2484:            <input
+src/App.jsx:2505:            <input
+src/App.jsx:2554:                        <input
+src/App.jsx:2588:                            <input
+src/App.jsx:2605:                          <input
+=== Tables ===
+src/features/proposal/ProposalRenderer.jsx:49:        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+src/features/proposal/ProposalRenderer.jsx:76:        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+src/features/proposal/ProposalRenderer.jsx:135:        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+src/features/proposal/InternalCockpit.jsx:244:          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '4px' }}>
+src/App.jsx:873:      <table>
+src/App.jsx:903:      <table>

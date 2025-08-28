@@ -1,0 +1,43 @@
+=== ROOT ===
+total 656
+drwxrwxrwx+   7 codespace codespace   4096 Aug 23 14:15 .
+drwxrwxrwx+   5 codespace root        4096 Aug 23 14:14 ..
+-rw-rw-rw-    1 codespace codespace    165 Aug 23 11:04 .env
+-rw-r--r--    1 codespace codespace    253 Aug 21 07:37 .gitignore
+-rw-r--r--    1 codespace codespace    856 Aug 21 07:37 README.md
+drwxrwxrwx+   5 codespace codespace   4096 Aug 23 14:15 __audit_ctx
+drwxrwxrwx+   3 codespace codespace   4096 Aug 22 14:39 dist
+-rw-r--r--    1 codespace codespace    763 Aug 21 07:37 eslint.config.js
+-rw-r--r--    1 codespace codespace    123 Aug 21 09:35 index.html
+drwxrwxrwx+ 402 codespace codespace  20480 Aug 23 11:09 node_modules
+-rw-rw-rw-    1 codespace codespace 343046 Aug 23 11:08 package-lock.json
+-rw-rw-rw-    1 codespace codespace   1477 Aug 23 11:08 package.json
+-rw-rw-rw-    1 codespace codespace 239594 Aug 23 11:09 pnpm-lock.yaml
+-rw-rw-rw-    1 codespace codespace     68 Aug 21 09:47 postcss.config.js
+drwxrwxrwx+   2 codespace codespace   4096 Aug 21 09:57 public
+drwxrwxrwx+   5 codespace codespace   4096 Aug 23 10:35 src
+-rw-rw-rw-    1 codespace codespace    175 Aug 21 09:48 tailwind.config.js
+-rw-rw-rw-    1 codespace codespace     69 Aug 21 10:22 vercel.json
+-rw-r--r--    1 codespace codespace    161 Aug 21 07:37 vite.config.js
+=== SRC (L3) ===
+src
+├── App.jsx
+├── assets
+│   └── react.svg
+├── features
+│   └── proposal
+│       ├── InternalCockpit.jsx
+│       └── ProposalRenderer.jsx
+├── index.css
+├── main.jsx
+└── utils
+    ├── adapters.js
+    └── ikm.js
+
+5 directories, 8 files
+=== PUBLIC (L2) ===
+public
+├── abeam-logo.png
+└── vite.svg
+
+1 directory, 2 files

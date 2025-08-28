@@ -1,0 +1,52 @@
+{
+  "clientName": "Sample Client Berhad",
+  "clientShort": "SAMPLE",
+  "packageTier": "Essential",
+  "proposalId": "ABMY-23-Aug-25-001",
+  "validityDays": 14,
+  "generatedAt": "23 Aug 2025, 10:45 PM",
+  "watermark": true,
+  "totalMandays": 550,
+  "grandTotal": 1100000,
+  "timelineSummary": "Sep 2025–Jan 2026 (22 weeks)",
+  "phases": [
+    {"name":"Discover","start":"2025-09-01","end":"2025-09-05","mandays":28},
+    {"name":"Prepare","start":"2025-09-08","end":"2025-09-19","mandays":55},
+    {"name":"Explore","start":"2025-09-22","end":"2025-10-24","mandays":110},
+    {"name":"Realize","start":"2025-10-27","end":"2025-12-19","mandays":248},
+    {"name":"Deploy","start":"2026-01-05","end":"2026-01-23","mandays":83},
+    {"name":"Run","start":"2026-01-26","end":"2026-01-30","mandays":28}
+  ],
+  "blackouts": [
+    {"label":"Company Shutdown","start":"2025-12-23","end":"2026-01-03"}
+  ],
+  "commercials": [
+    {"label":"Professional Services (550 md @ RM 2,000)","base":1100000,"percent":0,"amount":0,"net":1100000,"notes":""},
+    {"label":"AMS (optional)","base":"-","percent":0,"amount":0,"net":0,"notes":"Excluded"},
+    {"label":"Rounding","base":"-","percent":0,"amount":"-","net":0,"notes":"Commercial rounding"},
+    {"label":"<b>Grand Total</b>","base":"-","percent":0,"amount":"-","net":1100000,"notes":""}
+  ],
+  "milestones": [
+    {"name":"Contract Signing","when":"T0","amount":"RM 220,000.00","notes":"Mobilization"},
+    {"name":"Discover Complete","when":"End of Discover (05 Sep 2025)","amount":"RM 165,000.00","notes":"Sign-off"},
+    {"name":"Explore Complete","when":"End of Explore (24 Oct 2025)","amount":"RM 220,000.00","notes":"Fit-to-Standard sign-off"},
+    {"name":"Realize Complete","when":"End of Realize (19 Dec 2025)","amount":"RM 275,000.00","notes":"UAT sign-off"},
+    {"name":"Deploy (Go-Live)","when":"Go-Live (23 Jan 2026)","amount":"RM 165,000.00","notes":"Handover"},
+    {"name":"Run (Hypercare + 30d)","when":"Post go-live","amount":"RM 55,000.00","notes":"Closure"}
+  ],
+  "scopeColumns": [
+    {"title":"Selected Capabilities","items":["General Ledger Accounting","Asset Accounting","Payment Processing","Open Item Management"]},
+    {"title":"Forms","items":["Tax Invoice","Credit Note","Debit Note","Remittance Advice"]},
+    {"title":"Interfaces","items":["Bank Export (payment)","SST Reporting (LHDN)"]}
+  ],
+  "inputAudit":[
+    {"key":"MY Project Rate (RM/day)","value":"RM 2,000.00"},
+    {"key":"Team Size (FTE)","value":"5"},
+    {"key":"Working Days/Week","value":"5"},
+    {"key":"Estimated Weeks","value":"22"}
+  ],
+  "inputsHash":"deadbeef",
+  "generatorName":"ABeam SAP Cloud ERP Estimator",
+  "generatorEmail":"presales@abeam.my",
+  "ip":"203.0.113.24"
+}
