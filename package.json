@@ -4,7 +4,6 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "postinstall": "pnpm rebuild esbuild @tailwindcss/oxide || true",
     "typecheck": "echo 'TODO: add tsc --noEmit' && exit 0",
     "lint": "eslint .",
     "test": "echo 'TODO: add jest' && exit 0",
@@ -57,5 +56,11 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.12",
     "vite": "^7.1.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@tailwindcss/oxide"
+    ]
   }
 }
