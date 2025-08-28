@@ -3,22 +3,33 @@
   "lastSync": "2025-08-28T09:00:00+08:00",
   "currentSprint": "S-01",
   "focus": [
-    "Renderer reads payload.financials exclusively",
-    "Cockpit Gantt dynamic sizing and long-range handling",
-    "Scope chip accessibility and keyboard support"
+    "Unify payload consumption across Proposal & Cockpit using financials",
+    "Configurable timeline (start date, workweek, blackouts) with dynamic Gantt"
   ],
-  "openPRs": [
-    "PR-004: Unify payload builder & receivers",
-    "PR-006: PDF export restyle to match renderer"
-  ],
+  "openPRs": [],
   "risks": [
-    "Popup blockers may block new tab before postMessage; rely on token fallback",
-    "Very long projects (>72 weeks) can still create label overlap in Gantt"
+    "Popup blockers can prevent tab open and delay postMessage hand-off",
+    "Divergence between legacy fields and financials if consumers are not updated"
   ],
   "blockedOn": [],
   "next3Tasks": [
-    "Replace remaining legacy field reads in renderer with financials.*",
-    "Thin week labels when pixel step < 12px to prevent overlap",
-    "Persist calculator inputs to localStorage with reset-to-defaults"
+    {
+      "id": "T-001",
+      "title": "Unify payload consumption (Renderer + Cockpit)",
+      "effort": "M",
+      "status": "In-Progress"
+    },
+    {
+      "id": "T-002",
+      "title": "Dynamic Gantt sizing in Cockpit",
+      "effort": "S",
+      "status": "Ready"
+    },
+    {
+      "id": "T-003",
+      "title": "Timeline inputs (start date, workdays, blackouts) persisted to payload",
+      "effort": "M",
+      "status": "Ready"
+    }
   ]
 }
