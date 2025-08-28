@@ -1,0 +1,17 @@
+name: Feature request
+description: Propose a feature with acceptance criteria
+title: "feat: "
+labels: ["feature"]
+body:
+  - type: textarea
+    id: problem
+    attributes: { label: Problem / Goal }
+  - type: textarea
+    id: solution
+    attributes: { label: Proposed Solution }
+  - type: textarea
+    id: ac
+    attributes: { label: Acceptance Criteria }
+  - type: dropdown
+    id: effort
+    attributes: { label: Effort, options: ["S","M","L"] }

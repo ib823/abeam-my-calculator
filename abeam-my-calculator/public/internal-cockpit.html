@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ABeam — Internal Resource Cockpit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --bg:#f8fafc;
+    --brand:#0B5CAB; --accent:#22c55e; --warn:#f59e0b; --danger:#ef4444; --card:#ffffff;
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "Inter", system-ui, -apple-system, Segoe UI, Arial}
+  .wrap{max-width:1200px;margin:20px auto;padding:0 16px}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .btn{border:1px solid var(--line);background:#111827;color:#fff;border-radius:10px;padding:8px 12px;font-weight:600;cursor:pointer}
+  .btn.secondary{background:#fff;color:#111827}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+  .grid{display:grid;gap:12px}
+  .grid-3{grid-template-columns: repeat(3, minmax(0,1fr));}
+  .muted{color:var(--muted)}
+  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace}
+  .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .row>label{font-size:12px;color:var(--muted)}
+  input[type="number"], input[type="date"], input[type="text"], textarea{padding:8px 10px;border:1px solid var(--line);border-radius:10px}
+  table{width:100%;border-collapse:collapse}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left}
+  th{background:#f1f5f9}
+  svg{width:100%;height:auto;display:block}
+  .badge{display:inline-block;border-radius:999px;padding:2px 8px;border:1px solid var(--line);background:#fff;font-size:12px}
+  #ganttHost{overflow:auto} /* allow wide timelines to scroll */
+  @media print{
+    .toolbar{display:none}
+    body{background:#fff}
+    .card{page-break-inside:avoid}
+  }
+</style>
+</head>
+
+<script>
+/* Cockpit bootstrap – resilient + with phase synthesis */
+(function () {
+  // ---------- tiny helpers ----------
+  const $ = (id) => document.getElementById(id);
+  const fmtDate = (d) => new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  const asISO = (d) => {
+    const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${dd}`;
+  };
+  const daysBetween = (s,e)=> Math.max(1, Math.ceil((+e-+s)/86400000)+1);
+
+  // ---------- safe logger banner ----------
+  function setStatus(msg){
+    let n = document.getElementById('cockpitStatus');
+    if(!n){ n = document.createElement('div'); n.id='cockpitStatus';
+      n.style.cssText='position:fixed;right:12px;bottom:12px;background:#fffbeb;border:1px solid #f59e0b;color:#92400e;padding:6px 10px;border-radius:8px;font:12px/1.3 system-ui;z-index:9999';
+      document.body.appendChild(n);
+    }
+    n.textContent = msg;
+    clearTimeout(n._t); n._t = setTimeout(()=> n.remove(), 3500);
+  }
+
+  // ---------- Gantt (dynamic size) ----------
+  function renderGantt(phases){
+    const host = $('ganttHost');
+    if(!host){ setStatus('ganttHost not found'); return; }
+    if(!Array.isArray(phases) || !phases.length){ host.innerHTML=''; return; }
+
+    const parse=(s)=> new Date(s+'T00:00:00');
+    const min=new Date(Math.min(...phases.map(p=>+parse(p.start))));
+    const max=new Date(Math.max(...phases.map(p=>+parse(p.end))));
+    const spanDays = Math.max(1, daysBetween(min,max));
+    const pxPerDay = 18, left=110, right=28;
+    const rowH=26, gap=12, top=60, bottom=28;
+
+    const W = Math.max(820, left + spanDays*pxPerDay + right);
+    const H = top + (rowH+gap)*phases.length + bottom;
+    const x=(d)=> left + ((+d - +min)/86400000) * pxPerDay;
+
+    // grid
+    const months=[]; {
+      const m0=new Date(min.getFullYear(), min.getMonth(), 1);
+      for(let d=new Date(m0); d<=max; d.setMonth(d.getMonth()+1)){
+        const x0=x(d), x1=x(new Date(d.getFullYear(), d.getMonth()+1, 1));
+        months.push(`<g><rect x="${x0}" y="24" width="${Math.max(1,x1-x0)}" height="26" fill="#f8fafc"/>
+          <line x1="${x0}" y1="24" x2="${x0}" y2="${H-bottom}" stroke="#e2e8f0"/>
+          <text x="${x0+6}" y="42" font-size="11">${d.toLocaleDateString('en-GB',{month:'short',year:'numeric'})}</text></g>`);
+      }
+    }
+    const weeks=[]; {
+      let d=new Date(min); d.setDate(d.getDate()-((d.getDay()+6)%7));
+      while(d<=max){ weeks.push(`<g><line x1="${x(d)}" y1="50" x2="${x(d)}" y2="${H-bottom}" stroke="#eef2f7"/></g>`); d.setDate(d.getDate()+7); }
+    }
+
+    const rows = phases.map((p,i)=>{
+      const s=new Date(p.start+'T00:00:00'), e=new Date(p.end+'T00:00:00');
+      const y= top + i*(rowH+gap);
+      const xs=x(s), xe=x(e); const width=Math.max(6, xe-xs);
+      return `
+        <rect x="${xs}" y="${y}" width="${width}" height="${rowH}" rx="6" fill="#0B5CAB"/>
+        <polygon points="${xs+width},${y} ${xe+14},${y+rowH/2} ${xs+width},${y+rowH}" fill="#0B5CAB"/>
+        <text x="${xs-6}" y="${y+rowH/2+4}" text-anchor="end" font-size="10">${fmtDate(s)}</text>
+        <text x="${(xs+xe)/2}" y="${y-6}" font-size="10" fill="#334155" text-anchor="middle">${daysBetween(s,e)}d</text>
+        <text x="${(xs+xe)/2}" y="${y+rowH/2+4}" font-size="11" fill="#fff" text-anchor="middle" font-weight="700">${p.name}</text>
+        <text x="${xe+20}" y="${y+rowH/2+4}" font-size="10">${fmtDate(e)}</text>`;
+    }).join("");
+
+    host.innerHTML = `<svg viewBox="0 0 ${W} ${H}">
+      <rect width="${W}" height="${H}" fill="#fff"/>
+      <text x="${left}" y="18" font-size="16" font-weight="700">Project Implementation Timeline</text>
+      <text x="${left}" y="36" font-size="12" fill="#475569">${fmtDate(min)} → ${fmtDate(max)}</text>
+      ${months.join("")}${weeks.join("")}${rows}
+    </svg>`;
+  }
+
+  // ---------- Phase synthesis (when payload has none) ----------
+  function synthesizePhases(startISO, totalWeeks){
+    // default split (1,2,4,2,1,1 = 11 units). Scale to totalWeeks.
+    const archetype = [
+      ['Project Prep',1],
+      ['Explore/Design',2],
+      ['Build/Configure',4],
+      ['Test',2],
+      ['Cutover',1],
+      ['Go-Live & Hypercare',1],
+    ];
+    const units = archetype.reduce((a,[_n,w])=>a+w,0) || 1;
+    const scale = Math.max(1, Math.round(Number(totalWeeks||11)));
+    // distribute scaled weeks (integer)
+    let remaining = scale, out=[];
+    const start = new Date((startISO||asISO(new Date()))+'T00:00:00');
+    archetype.forEach(([name,w],i)=>{
+      let weeks = Math.max(1, Math.round((w/units)*scale));
+      if(i===archetype.length-1) weeks = Math.max(1, remaining); // fix remainder
+      remaining -= weeks;
+      const s = i===0 ? new Date(start) : new Date(out[i-1].end+'T00:00:00');
+      if(i>0) s.setDate(s.getDate()+1);
+      const e = new Date(s); e.setDate(e.getDate()+weeks*7 - 1);
+      out.push({ name, start: asISO(s), end: asISO(e), weeks });
+    });
+    return out;
+  }
+
+  // ---------- payload → phases ----------
+  function normalizePhases(p){
+    const phases = Array.isArray(p?.phases) ? p.phases : null;
+    if(phases && phases.length){
+      // pass through (ensure ISO date strings)
+      return phases.map(q=>({
+        name: q.name,
+        start: q.start,
+        end: q.end,
+      }));
+    }
+    // synthesize from timelineWeeks or totalMandays / (teamSize*workdays)
+    const startISO = p?.startISO || asISO(new Date());
+    const tw = Number(p?.timelineWeeks) ||
+               (p?.totalMandays && p?.teamSize && p?.workdays
+                 ? Math.round(p.totalMandays / (p.teamSize * p.workdays))
+                 : 11);
+    return synthesizePhases(startISO, tw);
+  }
+
+  // ---------- header fill (non-fatal if ids missing) ----------
+  function fillHeader(p){
+    const fmtRM = (n)=> 'RM ' + (Number(n||0)).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const el = (id, text)=> { const n=$(id); if(n) n.textContent = text; };
+    el('clientName', p.clientName || 'Client');
+    el('propId', p.proposalId || '—');
+    const impl = p.financials?.implementationSubtotal ?? p.grandTotal ?? 0;
+    const ams  = p.financials?.amsPrice ?? 0;
+    const grand= p.financials?.grandTotal ?? (impl + ams);
+    el('totals', `Impl: ${fmtRM(impl)} • AMS: ${fmtRM(ams)} • Grand: ${fmtRM(grand)} • ${p.totalMandays||0} d`);
+    const amsTag = $('amsTag'); if(amsTag) amsTag.textContent = ams>0?'On':'Off';
+  }
+
+  // ---------- boot after DOM ----------
+  function boot(){
+    // bridge 1: postMessage
+    let rendered = false;
+    function render(p){ if(rendered) return; rendered=true; try {
+      const phases = normalizePhases(p);
+      fillHeader(p);
+      renderGantt(phases);
+    } catch(e){ console.error(e); setStatus('Render error: '+e.message); } }
+
+    window.addEventListener('message', ev=>{
+      if(ev?.data?.type==='proposalData' && ev.data.payload){ render(ev.data.payload); }
+    });
+
+    // bridge 2: #lk token -> localStorage
+    (function tryHash(){
+      const m=(location.hash||'').match(/[#&]lk=([^&]+)/);
+      if(!m) return;
+      try{
+        const raw = localStorage.getItem('ikm:payload:'+decodeURIComponent(m[1]));
+        if(raw){ localStorage.removeItem('ikm:payload:'+decodeURIComponent(m[1])); render(JSON.parse(raw)); }
+      }catch(e){}
+    })();
+
+    // bridge 3: last session snapshot (graceful)
+    setTimeout(()=>{
+      if(!rendered){
+        try{
+          const snap = sessionStorage.getItem('abeam_pdf_summary');
+          if(snap){ const j=JSON.parse(snap); if(j?.proposal){ render(j.proposal); return; } }
+        }catch{}
+      }
+      if(!rendered){
+        // final fallback: show synthetic timeline so the page is never blank
+        setStatus('No payload received — showing a sample timeline');
+        render({ timelineWeeks: 11, teamSize: 5, workdays: 5 });
+      }
+    }, 300);
+  }
+
+  if(document.readyState === 'loading'){
+    window.addEventListener('DOMContentLoaded', boot);
+  }else{
+    boot();
+  }
+})();
+</script>
+
+
+<body>
+  <div class="wrap">
+    <div class="toolbar">
+      <button id="btnCsv" class="btn secondary">Export CSV (weekly)</button>
+      <button id="btnIkm" class="btn secondary">Generate .ikm</button>
+      <span class="badge muted">Price ≠ Staffing (client)</span>
+      <span class="badge">AMS <span id="amsTag">Off</span></span>
+      <span class="badge">Expedite <span id="expTag">Off</span></span>
+    </div>
+
+    <div class="grid grid-3">
+      <div class="card">
+        <div class="row"><label>Client</label><div id="clientName" style="font-weight:700"></div></div>
+        <div class="row"><label>Proposal ID</label><div id="propId" class="mono"></div></div>
+        <div class="row"><label>Totals</label><div id="totals" class="mono"></div></div>
+      </div>
+      <div class="card">
+        <div class="row">
+          <label>AMS (months)</label><input id="amsMonths" type="number" min="0" max="36" value="12"/>
+          <label>AMS monthly (RM)</label><input id="amsMonthly" type="number" min="0" value="45000"/>
+        </div>
+        <div class="row">
+          <label>Expedite %</label><input id="expPct" type="number" min="0" max="50" value="0"/>
+        </div>
+        <div class="muted" style="margin-top:6px">These affect internal totals only. Client pricing remains <b>mandays × rate</b> unless Expedite is explicitly included.</div>
+      </div>
+      <div class="card">
+        <div class="row"><label>Paste payload (fallback)</label></div>
+        <textarea id="paste" class="mono" placeholder="Paste JSON here if auto-load fails" rows="6" style="width:100%"></textarea>
+        <div class="row" style="margin-top:6px"><button id="btnLoad" class="btn secondary">Load from Paste</button></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <div class="muted" style="margin-bottom:8px">Timeline (prototype)</div>
+      <div id="ganttHost"></div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <div class="row" style="margin-bottom:8px"><label>Phase allocations (role-based)</label></div>
+      <table id="allocTable">
+        <thead><tr><th>Phase</th><th>Role</th><th>FTE</th><th>Weeks</th><th>Mandays</th><th>Notes</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const fmtDate = (d) => new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  const asISO = (d) => {
+    const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${dd}`;
+  };
+  const clamp = (n,min,max)=> Math.max(min, Math.min(max, Number(n||0)));
+
+  // --- inbound payload bridge (postMessage + #lk localStorage) ---
+  let booted=false;
+  function renderWith(p){ if(booted) return; booted=true; try{ initCockpit(p); }catch(e){ console.error(e); } }
+  window.addEventListener('message', ev => { if(ev?.data?.type==='proposalData' && ev.data.payload){ renderWith(ev.data.payload); }});
+  (function tryHash(){ 
+    const m=(location.hash||'').match(/[#&]lk=([^&]+)/); if(!m) return;
+    try{ const key='ikm:payload:'+decodeURIComponent(m[1]); const raw=localStorage.getItem(key);
+      if(raw){ localStorage.removeItem(key); renderWith(JSON.parse(raw)); }
+    }catch{}
+  })();
+
+  // absolute fallback (optional): read session snapshot
+  if(!booted){ try{ const snap = sessionStorage.getItem('abeam_pdf_summary'); if(snap){ const j=JSON.parse(snap); if(j?.proposal) renderWith(j.proposal); }}catch{} }
+
+  // ---------------- Gantt (print-safe SVG) ----------------
+  function renderGantt(phases, blackouts){
+    const host = $('ganttHost'); if(!phases?.length){ host.innerHTML=''; return; }
+
+    // dynamic sizing based on date span and number of phases
+    const parse=(s)=> new Date(s+'T00:00:00');
+    const min=new Date(Math.min(...phases.map(p=>+parse(p.start))));
+    const max=new Date(Math.max(...phases.map(p=>+parse(p.end))));
+    const spanDays = Math.max(1, Math.ceil((+max - +min)/86400000)+1);
+    const pxPerDay = 18;                         // responsive width
+    const left=110, right=28;
+    const W = Math.max(820, left + spanDays*pxPerDay + right);
+
+    const rowH=26, gap=12, top=60, bottom=28;
+    const H = top + (rowH+gap)*phases.length + bottom;
+
+    const x=(d)=> left + ((+d - +min)/86400000) * pxPerDay;
+
+    // months/ weeks grid
+    const m0=new Date(min.getFullYear(),min.getMonth(),1);
+    const monthStarts=[]; { let d=new Date(m0); while(d<=max){ monthStarts.push(new Date(d)); d.setMonth(d.getMonth()+1); } }
+    const weeks=[]; { let d=new Date(min); d.setDate(d.getDate()-((d.getDay()+6)%7)); while(d<=max){ weeks.push(new Date(d)); d.setDate(d.getDate()+7);} }
+
+    const months = monthStarts.map(d=>{
+      const x0=x(d), x1=x(new Date(d.getFullYear(), d.getMonth()+1, 1));
+      return `<g><rect x="${x0}" y="24" width="${Math.max(1,x1-x0)}" height="26" fill="#f8fafc"/>
+        <line x1="${x0}" y1="24" x2="${x0}" y2="${H-bottom}" stroke="#e2e8f0"/>
+        <text x="${x0+6}" y="42" font-size="11">${d.toLocaleDateString('en-GB',{month:'short',year:'numeric'})}</text></g>`;
+    }).join("");
+
+    const weeksSvg = weeks.map(d=>`<g><line x1="${x(d)}" y1="50" x2="${x(d)}" y2="${H-bottom}" stroke="#eef2f7"/>
+      <text x="${x(d)+2}" y="62" font-size="9" fill="#94a3b8">W${isoWeek(d)}</text></g>`).join("");
+
+    const rows = phases.map((p,i)=>{
+      const s=parse(p.start), e=parse(p.end);
+      const y= top + i*(rowH+gap);
+      const xs=x(s), xe=x(e); const width=Math.max(6, xe-xs);
+      return `
+        <rect x="${xs}" y="${y}" width="${width}" height="${rowH}" rx="6" fill="#0B5CAB"/>
+        <polygon points="${xs+width},${y} ${xe+14},${y+rowH/2} ${xs+width},${y+rowH}" fill="#0B5CAB"/>
+        <text x="${xs-6}" y="${y+rowH/2+4}" text-anchor="end" font-size="10">${fmtDate(s)}</text>
+        <text x="${(xs+xe)/2}" y="${y-6}" font-size="10" fill="#334155" text-anchor="middle">${daysBetween(s,e)}d</text>
+        <text x="${(xs+xe)/2}" y="${y+rowH/2+4}" font-size="11" fill="#fff" text-anchor="middle" font-weight="700">${p.name}</text>
+        <text x="${xe+20}" y="${y+rowH/2+4}" font-size="10">${fmtDate(e)}</text>`;
+    }).join("");
+
+    host.innerHTML = `<svg viewBox="0 0 ${W} ${H}">
+      <rect width="${W}" height="${H}" fill="#fff"/>
+      <text x="${left}" y="18" font-size="16" font-weight="700">Project Implementation Timeline</text>
+      <text x="${left}" y="36" font-size="12" fill="#475569">${fmtDate(min)} → ${fmtDate(max)}</text>
+      ${months}${weeksSvg}${rows}
+    </svg>`;
+
+    function isoWeek(d){
+      const tmp=new Date(d.getTime()); tmp.setHours(0,0,0,0);
+      tmp.setDate(tmp.getDate()+3-((tmp.getDay()+6)%7));
+      const w1=new Date(tmp.getFullYear(),0,4);
+      return 1+Math.round(((tmp - w1)/86400000 - 3 + ((w1.getDay()+6)%7))/7);
+    }
+    function daysBetween(s,e){ return Math.max(1, Math.ceil((+e-+s)/86400000)+1); }
+  }
+
+  // ---------------- Cockpit state + editors ----------------
+  const cockpit = {
+    workdaysPerWeek: 5,
+    phases: [],       // [{name,start,end,weeks}]
+    startISO: null,   // first phase start
+    allocations: [],  // [{phase, role, fte, weeks, mandays, notes}]
+    payload: null,
+  };
+
+  function initCockpit(payload){
+    cockpit.payload = payload;
+    cockpit.workdaysPerWeek = Number(payload.workdays || 5);
+
+    // Normalize phases to carry "weeks" and anchor on start date
+    const src = Array.isArray(payload.phases) ? payload.phases : [];
+    cockpit.phases = src.map(p => ({
+      name: p.name,
+      start: p.start,
+      end: p.end,
+      weeks: Math.max(1, Math.round(daysDiff(p.start,p.end)/7)),
+    }));
+    cockpit.startISO = cockpit.phases.length ? cockpit.phases[0].start : asISO(new Date());
+
+    // Render UI sections
+    buildPhaseEditor();
+    renderGantt(cockpit.phases, payload.blackouts||[]);
+    buildAllocations();
+    fillHeader(payload);
+  }
+
+  function daysDiff(a,b){ return Math.max(1, Math.ceil((+new Date(b) - +new Date(a))/86400000)+1); }
+
+  // ----- Header bits (client, totals, badges already in your HTML) -----
+  function fmtRM(n){ return 'RM ' + (Number(n||0)).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function fillHeader(p){
+    $('clientName').textContent = p.clientName || 'Client';
+    $('propId').textContent     = p.proposalId || '—';
+    $('totals').textContent     = `Impl: ${fmtRM(p.financials?.implementationSubtotal ?? p.grandTotal)} • AMS: ${fmtRM(p.financials?.amsPrice||0)} • Grand: ${fmtRM(p.financials?.grandTotal ?? p.grandTotal)} • ${p.totalMandays||0} d`;
+    $('amsTag').textContent     = (p.financials?.amsPrice||0) > 0 ? 'On' : 'Off';
+  }
+
+  // ----- Phase editor (start date + per-phase weeks) -----
+  function buildPhaseEditor(){
+    const host = document.createElement('div');
+    host.className = 'card'; host.style.marginTop='12px';
+    const rows = cockpit.phases.map((p,i)=>`
+      <tr>
+        <td style="width:40%;">${p.name}</td>
+        <td><input type="number" min="1" value="${p.weeks}" data-i="${i}" class="phWeeks" style="width:96px"/></td>
+        <td class="muted"><span id="ph_${i}_range">${fmtDate(p.start)} → ${fmtDate(p.end)} (${p.weeks}w)</span></td>
+      </tr>`).join("");
+    host.innerHTML = `
+      <div class="pad" style="padding:12px">
+        <div class="row" style="margin-bottom:8px">
+          <label>Start date</label>
+          <input id="startISO" type="date" value="${cockpit.startISO}" />
+          <span class="muted">Adjust weeks below to resize phases.</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr><th>Phase</th><th style="width:120px">Weeks</th><th>Dates</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+    // insert right under the gantt card (after it)
+    const ganttCard = $('ganttHost').closest('.card') || $('ganttHost').parentElement;
+    ganttCard.parentElement.insertBefore(host, ganttCard.nextSibling);
+
+    $('startISO').addEventListener('change', (e)=>{ cockpit.startISO = e.target.value; recomputePhaseDates(); });
+    host.querySelectorAll('.phWeeks').forEach(inp=>{
+      inp.addEventListener('input', (e)=>{
+        const i = Number(e.target.dataset.i); cockpit.phases[i].weeks = clamp(e.target.value,1,520);
+        recomputePhaseDates();
+      });
+    });
+  }
+
+  function recomputePhaseDates(){
+    // chain phases from startISO, each "weeks" long
+    let cur = new Date(cockpit.startISO+'T00:00:00');
+    cockpit.phases.forEach((p,i)=>{
+      const s = new Date(cur);
+      const e = new Date(cur); e.setDate(e.getDate() + p.weeks*7 - 1);
+      p.start = asISO(s); p.end = asISO(e);
+      const span = `${fmtDate(s)} → ${fmtDate(e)} (${p.weeks}w)`;
+      const spanCell = $(`ph_${i}_range`); if(spanCell) spanCell.textContent = span;
+      cur = new Date(e); cur.setDate(cur.getDate()+1);
+    });
+    renderGantt(cockpit.phases, cockpit.payload?.blackouts||[]);
+  }
+
+  // ----- Allocations (editable FTE / Weeks -> Mandays) -----
+  function buildAllocations(){
+    const tbody = document.querySelector('#allocTable tbody');
+    tbody.innerHTML = '';
+
+    // Seed a simple allocation per phase
+    cockpit.allocations = cockpit.phases.map(p => ({
+      phase: p.name, role: 'Consultant', fte: 1, weeks: p.weeks, mandays: p.weeks * cockpit.workdaysPerWeek, notes: ''
+    }));
+
+    cockpit.allocations.forEach((row, idx)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${row.phase}</td>
+        <td><input type="text" value="${row.role}" data-i="${idx}" data-k="role" class="alIn" style="width:140px"/></td>
+        <td><input type="number" min="0" step="0.1" value="${row.fte}" data-i="${idx}" data-k="fte" class="alIn" style="width:90px;text-align:right"/></td>
+        <td><input type="number" min="1" value="${row.weeks}" data-i="${idx}" data-k="weeks" class="alIn" style="width:90px;text-align:right"/></td>
+        <td><input type="number" min="0" value="${row.mandays}" data-i="${idx}" data-k="mandays" class="alIn" style="width:110px;text-align:right"/></td>
+        <td><input type="text" value="${row.notes}" data-i="${idx}" data-k="notes" class="alIn" style="width:160px"/></td>`;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll('.alIn').forEach(inp=>{
+      inp.addEventListener('input', (e)=>{
+        const i = Number(e.target.dataset.i), k = e.target.dataset.k;
+        const r = cockpit.allocations[i];
+        if(k==='fte' || k==='weeks'){ r[k]=Number(e.target.value||0); r.mandays = Math.round(r.fte * r.weeks * cockpit.workdaysPerWeek); // auto-calc
+          // reflect calc back to the mandays input
+          const mdInput = tbody.querySelector(`input[data-i="${i}"][data-k="mandays"]`);
+          if(mdInput) mdInput.value = r.mandays;
+        }else if(k==='mandays'){ r.mandays = Number(e.target.value||0); }
+        else { r[k] = e.target.value; }
+      });
+    });
+  }
+
+})();
+</script>
+
+
+
+</body>
+</html>

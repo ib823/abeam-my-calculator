@@ -1,0 +1,17 @@
+name: Bug report
+description: Report a bug with repro steps
+title: "fix: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: repro
+    attributes: { label: Steps to Reproduce }
+  - type: textarea
+    id: expected
+    attributes: { label: Expected }
+  - type: textarea
+    id: actual
+    attributes: { label: Actual }
+  - type: textarea
+    id: evidence
+    attributes: { label: Logs/Screens/Video }

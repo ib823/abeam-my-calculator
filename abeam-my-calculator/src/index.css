@@ -4,153 +4,307 @@
 @import "tailwindcss";
 
 /* =========================================================
-   Base polish
+   Global polish
    ========================================================= */
-:root {
-  color-scheme: light;
-}
-
-/* Font smoothing + predictable sizing */
 html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  box-sizing: border-box;
-  height: 100%;
-}
-*, *::before, *::after { box-sizing: inherit; }
-
-/* Subtle page background to make white cards pop */
-body {
-  background-color: #f8fafc; /* slate-50 */
-  color: #0f172a;            /* slate-900 */
+  scroll-behavior: smooth;
 }
 
-/* Responsive root font-size (keeps UI readable on small screens) */
-@media (max-width: 420px) { html { font-size: 17px; } }  /* ~+6% */
-@media (max-width: 360px) { html { font-size: 16.5px; } }
-
-/* Hide noisy scrollbars on utility containers when needed */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Numeric alignment helpers */
-.tabular-nums { font-variant-numeric: tabular-nums; }
+@media (max-width: 420px) { html { font-size: 17px; } }  /* +~6% for small phones */
+@media (max-width: 360px) { html { font-size: 18px; } }  /* +~12% for very small phones */
 
 /* =========================================================
-   Card + Panel polish
-   (Pairs nicely with Tailwind utility classes in JSX)
+   Theme tokens
    ========================================================= */
-.card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;  /* slate-200 */
-  border-radius: 0.75rem;     /* rounded-xl */
+:root{
+  /* Cinematic (default) */
+  --brand-bg-1: #059669;   /* emerald-600 */
+  --brand-bg-2: #0ea5a4;   /* teal-500   */
+  --brand-accent: #8b5cf6; /* violet-500 */
+
+  /* Neutral UI */
+  --ink:  #0f172a;  /* slate-900 */
+  --sub:  #475569;  /* slate-600 */
+  --line: #e2e8f0;  /* slate-200 */
+
+  /* ABeam tokens (used across app + exports) */
+  --abeam-50:  #E6EEFA;
+  --abeam-200: #B8C8EA;
+  --abeam-600: #0B2F86;
+  --abeam-700: #092C79;
+  --abeam-800: #072562;
+}
+
+/* ABeam corporate theme (toggle in app: document.body.classList.add('abeam')) */
+body.abeam{
+  --brand-bg-1: #1e3c72;
+  --brand-bg-2: #2a5298;
+  --brand-accent: #667eea;
+}
+
+/* Quick utilities */
+.text-abeam   { color: var(--abeam-600); }
+.bg-abeam     { background: var(--abeam-600); }
+.border-abeam { border-color: var(--abeam-600); }
+
+/* =========================================================
+   Buttons (opt-in)
+   ========================================================= */
+.btn-primary{
+  background: var(--abeam-600);
+  color: #fff;
+  border: 1px solid var(--abeam-600);
+  border-radius: 10px;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease;
+}
+.btn-primary:hover   { background: var(--abeam-700); border-color: var(--abeam-700); }
+.btn-primary:active  { background: var(--abeam-800); border-color: var(--abeam-800); }
+.btn-primary:focus   { outline: 0; box-shadow: 0 0 0 3px rgba(11,47,134,.25); }
+.btn-primary:disabled{ opacity: .6; cursor: not-allowed; }
+
+.btn-outline-primary{
+  background: #fff;
+  color: var(--abeam-600);
+  border: 1px solid var(--abeam-600);
+  border-radius: 10px;
+  transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.btn-outline-primary:hover { background: var(--abeam-50); }
+.btn-outline-primary:focus { outline: 0; box-shadow: 0 0 0 3px rgba(11,47,134,.18); }
+
+/* =========================================================
+   Chips / Tabs (opt-in)
+   ========================================================= */
+.chip{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:2px 8px; border-radius:9999px; border:1px solid #e5e7eb;
+  font-size:12px; font-weight:600;
+  transition: background .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.chip:hover{ border-color: var(--abeam-600); }
+.chip:focus{ outline: 0; box-shadow: 0 0 0 3px rgba(11,47,134,.18); }
+.chip.is-active,
+.chip[aria-pressed="true"],
+.chip[data-state="on"]{
+  background: var(--abeam-600);
+  color: #fff;
+  border-color: var(--abeam-600);
+}
+.chip .dot{
+  width: .65rem; height: .65rem; border-radius: 9999px;
+  background: currentColor; opacity: .35;
+}
+.chip-warning{ background:#fff7ed; color:#b45309; border-color:#f59e0b; }
+
+/* =========================================================
+   Proposal hero (shared by app preview and export HTML)
+   ========================================================= */
+.proposal-hero{
+  background: var(--abeam-600);
+  color: #fff;
+  border-radius: 1rem;
+}
+.proposal-hero .inner{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+.proposal-hero.center .inner{
+  align-items: center;
+  text-align: center;
+}
+.proposal-hero .big{
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.proposal-hero .meta{ opacity: .9; }
+
+/* Centered meta line used under hero (mirrors export HTML) */
+.context-bar{
+  margin: 8px 0 22px;
+  color: var(--sub);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* =========================================================
+   Focus helper
+   ========================================================= */
+.focus-abeam:focus{
+  outline: 0;
+  border-color: var(--abeam-600);
+  box-shadow: 0 0 0 3px rgba(11,47,134,.20);
+}
+
+/* =========================================================
+   Visual utilities
+   ========================================================= */
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+@keyframes pulse-slow { 0%,100%{opacity:1} 50%{opacity:.5} }
+@keyframes gradient-shift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+.animation-delay-1000 { animation-delay: 1s; }
+.animation-delay-2000 { animation-delay: 2s; }
+.bg-magical-gradient{
+  background: linear-gradient(-45deg, var(--brand-bg-1), var(--brand-bg-2), #0891b2, #0284c7);
+  background-size: 400% 400%;
+  animation: gradient-shift 15s ease infinite;
+}
+.glass{
+  background: rgba(255,255,255,.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.18);
+}
+.shadow-magical{
   box-shadow:
-    0 1px 2px rgba(0,0,0,0.04),
-    0 4px 12px rgba(0,0,0,0.03);
+    0 4px 6px -1px rgba(16,185,129,.10),
+    0 2px 4px -1px rgba(16,185,129,.06);
 }
+.shadow-magical-lg{
+  box-shadow:
+    0 20px 25px -5px rgba(16,185,129,.10),
+    0 10px 10px -5px rgba(16,185,129,.05);
+}
+.skeleton{
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+@keyframes loading{
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Touch-friendly and focus ring util */
+.touch-target { min-height: 44px; min-width: 44px; }
+.focus-visible\:ring-emerald { --tw-ring-color: rgb(16 185 129 / 0.5); }
 
 /* =========================================================
-   Form controls (global baseline)
+   Proposal header (SCOPED — doesn’t affect app header)
    ========================================================= */
-input[type="text"],
-input[type="number"],
-input[type="email"],
-input[type="search"],
-select,
-textarea {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;    /* slate-300 */
-  border-radius: 0.5rem;         /* rounded-lg */
-  padding: 0.55rem 0.75rem;
-  color: #0f172a;                /* slate-900 */
-  line-height: 1.3;
+.proposal-header{
+  border-bottom: 2px solid var(--line);
+  margin-bottom: 22px;
+}
+.proposal-header .header-inner{
+  display: grid;
+  grid-template-columns: 1fr 1fr;  /* title | contacts */
+  gap: 20px;
+  align-items: center;
+  padding: 0 0 18px 0;
+}
+.proposal-header .brand{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  min-width:0;                 /* allow wrapping */
+}
+.proposal-header .brand img{ height:60px; width:auto; }
+.proposal-header .t1{ font-weight:800; letter-spacing:-.01em; font-size:26px; line-height:1.2; margin:0; }
+.proposal-header .t2{ color:var(--sub); font-size:13px; margin-top:4px; }
+.proposal-header .contacts{
+  justify-self:end;
+  text-align:right;
+  font-size:13px;
+  line-height:1.35;
+  color:var(--ink);
+  max-width:560px;
+  overflow-wrap:anywhere;
+  min-width:0;
+}
+.proposal-header .contacts .co{ font-weight:700; margin-bottom:4px; }
+.proposal-header .contacts a{ color: var(--abeam-600); text-decoration:none; font-weight:600; }
+.proposal-header .contacts a:hover{ text-decoration:underline; }
+
+@media (max-width: 900px){
+  .proposal-header .header-inner{
+    grid-template-columns: 1fr;
+    justify-items:center;
+    row-gap:12px;
+  }
+  .proposal-header .contacts{
+    text-align:center;
+    max-width:100%;
+  }
+  .proposal-header .t1{ text-align:center; }
+}
+@media (max-width: 520px){
+  .proposal-header .brand img{ height:50px; }
+  .proposal-header .t1{ font-size:22px; }
+  .proposal-header .t2{ font-size:12px; }
 }
 
-input[type="text"]:focus,
-input[type="number"]:focus,
-input[type="email"]:focus,
-input[type="search"]:focus,
-select:focus,
-textarea:focus {
-  outline: none;
-  border-color: #2563eb;         /* blue-600 */
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+/* Monogram icon for LoB (unchanged) */
+.monoicon {
+  display:inline-flex;
+  height:32px; width:32px;
+  align-items:center; justify-content:center;
+  border-radius:6px;
+  border:1px solid var(--abeam-300);
+  background:#fff; color:var(--abeam-700);
+  font-weight:600; font-size:12px;
 }
-
-/* Remove number spinners for a cleaner look */
-input[type="number"] { -moz-appearance: textfield; }
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none; margin: 0;
-}
-
-/* Toggle/checkbox focus visible */
-input[type="checkbox"],
-input[type="radio"] {
-  accent-color: #2563eb; /* blue-600 */
-}
-
-/* Clamp utility for wide forms (center and limit width) */
-.form-clamp { max-width: 48rem; margin-left: auto; margin-right: auto; }
+.monoicon--active { background:var(--abeam-600); border-color:var(--abeam-600); color:#fff; }
+.monoicon--idle   { background:#fff; border-color:var(--abeam-300); color:var(--abeam-700); }
 
 /* =========================================================
-   Range (slider) styling — AMS discount
+   PRINT parity for in-app preview (matches export HTML)
    ========================================================= */
-input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: 8px;
-  border-radius: 9999px;
-  background: #e5e7eb;                 /* slate-200 */
-  cursor: pointer;
+@page { size: A4 portrait; margin: 14mm 14mm 16mm; }
+/* To force landscape across the whole app (optional):
+   @page { size: A4 landscape; margin: 14mm 14mm 16mm; }
+*/
+@media print{
+  html { font-size: 12.5px; }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .proposal-header, .proposal-hero, .context-bar { page-break-inside: avoid; break-inside: avoid; }
+  .card, .table-wrap, .grid-2, .grid-3 { page-break-inside: avoid; break-inside: avoid; }
+  thead { display: table-header-group; }
+  tfoot { display: table-footer-group; }
+  tr, td, th { break-inside: avoid; page-break-inside: avoid; }
+}
+/* injected: prevent action buttons overlap */
+.btn, button.btn { display:inline-flex; align-items:center; justify-content:center; }
+.actions, .action-row, .numbers-card .actions { display:flex; gap:12px; flex-wrap:wrap; }
+
+/* ===== Actions row (Summary) — injected ===== */
+.actions,
+.actions--summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
-/* WebKit thumb */
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  height: 18px; width: 18px;
-  border-radius: 50%;
-  background: #2563eb;                 /* blue-600 */
-  border: 2px solid #ffffff;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
-  margin-top: -5px;                     /* center over 8px track */
+/* Make the three action buttons uniform and tidy */
+.actions--summary > button {
+  min-width: 168px;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
-/* Firefox track & thumb */
-input[type="range"]::-moz-range-track {
-  height: 8px; border-radius: 9999px; background: #e5e7eb;
-}
-input[type="range"]::-moz-range-thumb {
-  height: 18px; width: 18px;
-  border-radius: 50%;
-  background: #2563eb; border: 2px solid #ffffff;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+/* Keep the whole block anchored nicely inside the Summary card */
+.actions--summary {
+  margin-top: 10px;
 }
 
-/* Focus ring parity with inputs */
-input[type="range"]:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+/* Responsive wrapping: 2 columns on medium, full width on small */
+@media (max-width: 1024px) {
+  .actions--summary > button { flex: 1 1 calc(50% - 12px); }
+}
+@media (max-width: 640px) {
+  .actions--summary > button { flex: 1 1 100%; }
 }
 
-/* =========================================================
-   Header / Brand (optional helpers – use if desired)
-   ========================================================= */
-.header-inner {
-  height: 64px;
-  display: flex; align-items: center; gap: 12px;
-}
-.header-inner .t1 { font-weight: 700; font-size: 1.125rem; line-height: 1.2; }
-.header-inner .t2 { color: #475569; font-size: 0.875rem; }
-
-/* =========================================================
-   Utility helpers
-   ========================================================= */
-.shadow-subtle {
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 6px 20px rgba(0,0,0,0.03);
-}
-.border-subtle { border: 1px solid #e2e8f0; } /* slate-200 */
-.bg-panel    { background: #ffffff; }
-.bg-page     { background: #f8fafc; }        /* slate-50 */
+/* Small polish: align Summary panel counters/text spacing a bit tighter */
+.summary-panel h3, .summary-panel .kpi, .summary-panel .row { margin-bottom: 6px; }

@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>ABeam — SAP Cloud ERP Proposal</title>
+  <style>
+    :root{ --ink:#0f172a;--muted:#475569;--line:#e2e8f0;--bg:#ffffff; --brand:#0B5CAB; }
+    @page{ size:A4 landscape; margin:14mm; }
+    html,body{background:var(--bg);color:var(--ink);font:13px/1.45 "Segoe UI",Calibri,Arial,sans-serif;margin:0}
+    .wrap{max-width:1152px;margin:16px auto 80px;padding:0 12px}
+    h1{font-size:26px;margin:6px 0 12px}
+    h2{font-size:18px;margin:18px 0 8px}
+    h3{font-size:13px;margin:14px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+    .grid{display:grid;gap:12px}
+    .card{border:1px solid var(--line);border-radius:14px;background:#fff}
+    .card .pad{padding:12px 14px}
+    .hero{background:var(--brand);color:#fff;border-radius:14px;padding:16px 18px}
+    .kpi{display:flex;gap:8px;align-items:baseline}
+    .n{font-size:24px;font-weight:800;letter-spacing:.2px}
+    .muted{color:var(--muted)}
+    .tag{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;background:#f8fafc}
+    .stack{display:flex;flex-wrap:wrap;gap:8px}
+    table{width:100%;border-collapse:collapse}
+    th,td{border:1px solid var(--line);padding:6px 8px;text-align:left}
+    th{background:#f8fafc}
+    .foot{position:fixed;left:14mm;right:14mm;bottom:6mm;display:flex;justify-content:space-between;font-size:10px;color:#64748b}
+    .watermark{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:.08;font-size:72px;color:#0f172a}
+    .debug{position:fixed;left:12px;bottom:12px;background:#fffbeb;border:1px solid #f59e0b;color:#92400e;padding:6px 10px;border-radius:10px;font-size:12px}
+    @media print{.screen-only{display:none!important}}
+    #gantt{overflow:auto} /* dynamic width gets scroll instead of truncation */
+  </style>
+
+  <script>
+  // robust receiver (postMessage + BroadcastChannel + one-time localStorage token)
+  (function bootReceiver(){
+    let rendered = false;
+    const $ = (id)=>document.getElementById(id);
+    const setDbg = (t)=>{ const el=$('dbg'); if(el) el.textContent=t; };
+
+    function renderWith(payload){
+      if(rendered) return;
+      rendered = true;
+      setDbg("Data received — rendering");
+      try { window.renderProposal(payload); } catch(e){ console.error(e); setDbg("Render failed: "+e.message); }
+      setTimeout(()=>{ const d=$('dbg'); if(d) d.style.display='none'; }, 800);
+    }
+
+    window.addEventListener("message",(ev)=>{
+      if(ev?.data?.type==="proposalData" && ev.data.payload){ renderWith(ev.data.payload); }
+    });
+
+    try{
+      const ch = new BroadcastChannel("proposal_channel");
+      ch.onmessage = (ev)=>{ if(ev?.data?.type==="proposalData" && ev.data.payload) renderWith(ev.data.payload); };
+    }catch{}
+
+    function tryLocalStorage(){
+      if(rendered) return;
+      const m = (location.hash||"").match(/[#&]lk=([^&]+)/);
+      if(m){
+        try{
+          const key = 'ikm:payload:'+decodeURIComponent(m[1]);
+          const raw = localStorage.getItem(key);
+          if(raw){ localStorage.removeItem(key); renderWith(JSON.parse(raw)); return true; }
+        }catch(e){ console.warn("localStorage hand-off failed", e); }
+      }
+      return false;
+    }
+    setDbg("Waiting for calculator data…");
+    setTimeout(tryLocalStorage,150);
+  })();
+  </script>
+</head>
+<body>
+<div class="wrap" id="root">
+  <div id="dbg" class="debug">Booting…</div>
+
+  <div class="stack screen-only" style="justify-content:flex-end;margin-bottom:8px">
+    <button onclick="window.print()" class="tag">Print / Save as PDF</button>
+  </div>
+
+  <!-- HEADER -->
+  <div class="grid" style="grid-template-columns: 1fr 340px">
+    <div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <img id="logo" alt="ABeam" src="/abeam-logo.png" style="height:36px"/>
+        <div class="tag" id="proposalId">—</div>
+        <div class="tag" id="validityTag">Validity: —</div>
+      </div>
+      <h1 style="margin-top:10px">SAP Cloud ERP Implementation — Proposal</h1>
+      <div class="muted" id="clientLine">Waiting for data…</div>
+    </div>
+    <div class="hero">
+      <div class="kpi"><div class="n" id="grandTotal">RM 0.00</div><div>Total Services</div></div>
+      <div style="height:6px"></div>
+      <div class="kpi"><div class="n" id="totalMandays">0 d</div><div>Mandays (est.)</div></div>
+      <div class="muted" id="timelineSummary" style="margin-top:6px">—</div>
+    </div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="card" style="margin-top:14px">
+    <div class="pad">
+      <h2>Indicative Timeline</h2>
+      <div class="muted">Week scale, weekends excluded. Blackouts are shaded. Asterisk (*) marks phase end inside blackout.</div>
+      <div id="gantt" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- COMMERCIALS + MILESTONES -->
+  <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:12px">
+    <div class="card"><div class="pad">
+      <h2>Commercials & Investment</h2>
+      <table id="tblCommercials"><thead>
+        <tr><th>Item</th><th>Base (RM)</th><th>Discount</th><th>Net (RM)</th><th>Notes</th></tr>
+      </thead><tbody></tbody></table>
+      <div class="muted" style="margin-top:8px" id="priceNote">—</div>
+    </div></div>
+
+    <div class="card"><div class="pad">
+      <h2>Milestones & Payments</h2>
+      <table id="tblMilestones"><thead>
+        <tr><th>Milestone</th><th>When</th><th>Amount</th><th>Notes</th></tr>
+      </thead><tbody></tbody></table>
+    </div></div>
+  </div>
+
+  <!-- SCOPE SNAPSHOT -->
+  <div class="card" style="margin-top:12px">
+    <div class="pad">
+      <h2>Scope Summary</h2>
+      <div id="scopeSummary" class="grid" style="grid-template-columns:repeat(3,1fr)"></div>
+    </div>
+  </div>
+
+  <!-- LEGAL (unchanged) -->
+  <div class="card" style="margin-top:12px">
+    <div class="pad">
+      <h2>Legal & Notices</h2>
+      <h3>Status & Governing Law</h3>
+      <p>This document is a non-binding, computer-generated estimate. Scope and commercials are subject to a signed Statement of Work (SOW).</p>
+      <p><b>Governing Law (Malaysia):</b> Disputes are subject to Malaysian law and jurisdiction. If the contracting entity is outside Malaysia, the governing law and venue shall be mutually agreed in the definitive contract.</p>
+      <h3>Liability</h3><p>Total liability is capped at fees paid for the services giving rise to the claim. Neither party is liable for indirect, incidental, punitive or consequential damages, loss of profits or data.</p>
+      <h3>Data Protection</h3><p>Both parties shall comply with PDPA (Malaysia). Where EU/UK data is involved, GDPR-compliant safeguards apply.</p>
+      <h3>IP & Usage</h3><p>All accelerators, methods and tools remain ABeam intellectual property. Upon full payment, the client receives a non-exclusive internal-use license.</p>
+      <h3>Sanctions & Export Control</h3><p>Each party shall comply with applicable export control and sanctions laws.</p>
+      <h3>Taxes</h3><p>Fees are exclusive of taxes. Malaysian SST applies where relevant. Payments to non-residents may be subject to withholding under the Income Tax Act 1967 (s.109B).</p>
+      <h3>Trademarks</h3><p>SAP and other names are trademarks of their respective owners.</p>
+    </div>
+  </div>
+
+  <!-- AUDIT -->
+  <div class="card" style="margin-top:12px">
+    <div class="pad">
+      <h2>Appendix — Inputs Audit Trail</h2>
+      <table id="tblInputs"><thead><tr><th>Input</th><th>Value</th><th>Notes</th></tr></thead><tbody></tbody></table>
+      <div class="muted" id="auditLine" style="margin-top:6px">—</div>
+    </div>
+  </div>
+</div>
+
+<div class="foot">
+  <div id="footLeft">—</div>
+  <div id="footRight" class="muted">ABeam Malaysia — SAP Cloud ERP</div>
+</div>
+
+<div class="watermark" id="wm" style="display:none">CONFIDENTIAL — DRAFT</div>
+
+<script>
+(function(){
+  const fmtRM = (n)=> 'RM ' + (Number(n||0)).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmtDate = (d)=> new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  const $ = (id)=> document.getElementById(id);
+
+  /* ==== Gantt (dynamic width/height) ==== */
+  function renderGantt(phases, blackouts){
+    const host = $('gantt');
+    host.innerHTML = "";
+    if(!phases || !phases.length) return;
+
+    const parse=(s)=> new Date(s+'T00:00:00');
+    const min=new Date(Math.min(...phases.map(p=>+parse(p.start))));
+    const max=new Date(Math.max(...phases.map(p=>+parse(p.end))));
+    const MS=86400000;
+    const days = Math.max(1, Math.ceil((+max - +min)/MS)+1);
+    const weeks = Math.max(1, Math.ceil(days/7));
+
+    // dynamic geometry
+    const L=110, R=24, T=46, B=28, rowH=26, gap=12;
+    const rows = phases.length;
+    const H = Math.max(220, T + 100 + rows*(rowH+gap) + 10 + B);
+    const W = Math.max(960, L + R + weeks*44);
+
+    const range=(+max - +min)||1;
+    const x=(d)=> L + ((+d - +min)/range)*(W-L-R);
+
+    const monthStarts=[];
+    { const m0=new Date(min.getFullYear(),min.getMonth(),1);
+      for(let d=new Date(m0); d<=max; d.setMonth(d.getMonth()+1)) monthStarts.push(new Date(d)); }
+
+    const weeksTicks=[];
+    { let d=new Date(min); d.setDate(d.getDate()-((d.getDay()+6)%7));
+      while(d<=max){weeksTicks.push(new Date(d)); d.setDate(d.getDate()+7);} }
+
+    const blks=(blackouts||[]).map(b=>{
+      const xs=x(parse(b.start)), xe=x(parse(b.end));
+      return `<g><rect x="${xs}" y="${T+46}" width="${Math.max(1,xe-xs)}" height="${H-B-(T+46)}" fill="#fde68a" opacity="0.6"/>
+        <text x="${xs+4}" y="${T+60}" font-size="10" fill="#92400e">${b.label||""}</text></g>`;
+    }).join("");
+
+    const rowsSvg=phases.map((p,i)=>{
+      const s=parse(p.start), e=parse(p.end); const xs=x(s), xe=x(e); const y=T+80+i*(rowH+gap);
+      const dur=Math.max(1, Math.ceil((+e-+s)/MS));
+      const bodyW=Math.max(3,(xe-xs)-14);
+      return `
+        <rect x="${xs}" y="${y}" width="${bodyW}" height="${rowH}" rx="6" fill="#0B5CAB"/>
+        <polygon points="${xs+bodyW},${y} ${xe},${y+rowH/2} ${xs+bodyW},${y+rowH}" fill="#0B5CAB"/>
+        <text x="${xs-6}" y="${y+rowH/2+4}" text-anchor="end" font-size="10">${fmtDate(s)}</text>
+        <text x="${(xs+xe)/2}" y="${y-6}" font-size="10" fill="#334155" text-anchor="middle">${dur}d</text>
+        <text x="${(xs+xe)/2}" y="${y+rowH/2+4}" font-size="11" fill="#fff" text-anchor="middle" font-weight="700">${p.name}</text>
+        <text x="${xe+6}" y="${y+rowH/2+4}" font-size="10">${fmtDate(e)}</text>`;
+    }).join("");
+
+    const months=monthStarts.map(d=>{
+      const x0=x(d), x1=x(new Date(d.getFullYear(), d.getMonth()+1, 1));
+      return `<g><rect x="${x0}" y="${T}" width="${Math.max(1,x1-x0)}" height="26" fill="#f8fafc"/>
+        <line x1="${x0}" y1="${T}" x2="${x0}" y2="${H-B}" stroke="#e2e8f0"/>
+        <text x="${x0+6}" y="${T+18}" font-size="11">${d.toLocaleDateString('en-GB',{month:'short',year:'numeric'})}</text></g>`;
+    }).join("");
+
+    const weeksSvg=weeksTicks.map(d=> `<g><line x1="${x(d)}" y1="${T+26}" x2="${x(d)}" y2="${H-B}" stroke="#eef2f7"/></g>`).join("");
+
+    host.innerHTML = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${W}" height="${H}" fill="#fff"/>
+      <text x="${L}" y="22" font-size="16" font-weight="700">Project Implementation Timeline</text>
+      <text x="${L}" y="40" font-size="12" fill="#475569">${fmtDate(min)} → ${fmtDate(max)}</text>
+      ${months}${weeksSvg}${blks}${rowsSvg}
+    </svg>`;
+  }
+
+  function fillTableRows(tbody, rows){
+    tbody.innerHTML='';
+    rows.forEach((r)=>{
+      const tr=document.createElement('tr');
+      r.forEach((c)=>{ const td=document.createElement('td'); td.innerHTML=c; tr.appendChild(td); });
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Actual page binding (prefers payload.financials)
+  window.renderProposal = function(p){
+    const F = p.financials || {};
+    const N = (v,d=0)=> (Number.isFinite(+v)?+v:d);
+
+    // Header
+    document.getElementById("clientLine").textContent =
+      `${p.clientName} • Package: ${p.packageTier} • Generated ${p.generatedAt}`;
+    document.getElementById("proposalId").textContent = p.proposalId || "";
+    document.getElementById("validityTag").textContent = `Validity: ${p.validityDays ?? "—"} days`;
+
+    const totalMandays = N(F.totalMandays, N(p.totalMandays));
+    const implSubtotal = N(F.implementationSubtotal, totalMandays * N(p.myRate));
+    const amsPrice     = N(F.amsPrice, (N(p.amsMonths)>0) ? N(p.amsMonths)*N(p.amsMonthly,45000):0);
+    const grandTotal   = N(F.grandTotal, implSubtotal + amsPrice + N(p.rounding));
+
+    document.getElementById("grandTotal").textContent = fmtRM(grandTotal);
+    document.getElementById("totalMandays").textContent = `${totalMandays} d`;
+    document.getElementById("timelineSummary").textContent = p.timelineSummary || "";
+
+    // Timeline
+    renderGantt(p.phases || [], p.blackouts || []);
+
+    // Commercials table (use canonical rows if provided)
+    const comm = Array.isArray(p.commercials) ? p.commercials : [];
+    const commRows = comm.map(i=>[
+      i.label,
+      i.base==='-'?'-':fmtRM(i.base),
+      (i.percent? (i.percent.toFixed(0)+'% ') : '0% ') + (i.amount? '/ '+fmtRM(i.amount):''),
+      fmtRM(i.net),
+      i.notes||''
+    ]);
+    fillTableRows(document.querySelector("#tblCommercials tbody"), commRows);
+    document.getElementById("priceNote").textContent = p.priceNote || '';
+
+    // Milestones
+    fillTableRows(document.querySelector("#tblMilestones tbody"),
+      (p.milestones||[]).map(m=>[m.name, m.when, m.amount, m.notes||'']));
+
+    // Scope
+    const scope = document.getElementById("scopeSummary"); scope.innerHTML = "";
+    (p.scopeColumns||[]).forEach(col=>{
+      const card=document.createElement('div'); card.className='card';
+      const pad=document.createElement('div'); pad.className='pad';
+      pad.innerHTML = `<h3>${col.title}</h3><ul style="margin:6px 0 0 18px">${col.items.map(x=>`<li>${x}</li>`).join("")}</ul>`;
+      card.appendChild(pad); scope.appendChild(card);
+    });
+
+    // Inputs (audit)
+    fillTableRows(document.querySelector("#tblInputs tbody"),
+      (p.inputAudit||[]).map(x=>[x.key, x.value, x.notes||'']));
+    document.getElementById("auditLine").textContent =
+      `Generated by ${p.generatorName} (${p.generatorEmail}) • Inputs hash ${p.inputsHash || ""}`;
+
+    // Footer & watermark
+    document.getElementById("footLeft").textContent =
+      `Proposal ${p.proposalId || ""} • Generated ${p.generatedAt || ""}`;
+    document.getElementById("wm").style.display = p.watermark ? "" : "none";
+  };
+})();
+</script>
+</body>
+</html>

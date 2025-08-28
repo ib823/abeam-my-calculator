@@ -1,0 +1,13 @@
+=== ROOT ===
+total 24
+drwxrwxrwx+ 5 codespace root      4096 Aug 23 14:14 .
+drwxr-xrwx+ 6 codespace root      4096 Aug 23 11:09 ..
+drwxrwxrwx+ 8 codespace root      4096 Aug 22 14:39 .git
+-rw-rw-rw-  1 codespace root        38 Aug 21 07:36 README.md
+drwxrwxrwx+ 5 codespace codespace 4096 Aug 23 14:14 __audit_ctx
+drwxrwxrwx+ 6 codespace codespace 4096 Aug 23 11:09 abeam-my-calculator
+=== SRC (L3) ===
+src  [error opening dir]
+
+0 directories, 0 files
+find: ‘src’: No such file or directory

@@ -1,0 +1,14 @@
+{
+  "setupVersion": "2025-09-01",
+  "lastSync": "2025-08-28T09:00:00+08:00",
+  "currentSprint": "S-01",
+  "focus": ["Stabilize CI", "Ship one feature end-to-end"],
+  "openPRs": [],
+  "risks": ["No CI yet", "No PR templates"],
+  "blockedOn": [],
+  "next3Tasks": [
+    {"id":"T-001","title":"Add PR/Issue templates","effort":"S","status":"Ready"},
+    {"id":"T-002","title":"Add CI with artifacts","effort":"M","status":"Ready"},
+    {"id":"T-003","title":"Create npm run verify","effort":"S","status":"Ready"}
+  ]
+}
