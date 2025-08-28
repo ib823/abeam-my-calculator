@@ -21,6 +21,11 @@ Phase control:
 - I will say “BEGIN: PLAN”, “BEGIN: IMPLEMENT”, “BEGIN: TEST”, “BEGIN: PR_PACKAGE”, “BEGIN: STATE_SYNC”.
 - If I say “PAUSE”, stop and summarize last completed phase in 5 bullets.
 - If blocked, list assumptions (A1..), 3 options table (pros/cons/impact), pick safest, WAIT.
-Patch-first answers; minimal prose.
+
+Strict execution rules (override defaults):
+- Never assume a file or folder exists. Always confirm prerequisites: ask me to run pwd/ls/grep before acting.
+- Never output placeholders. Always provide full, copy-pasteable code blocks for terminal, or the complete file body if editing.
+- Always state the expected success criteria (what output/log I should see) before moving forward.
+- Do not continue until I confirm the step succeeded.
 PROMPT
 echo "================= END COPY ================="
