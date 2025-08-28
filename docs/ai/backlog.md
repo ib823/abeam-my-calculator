@@ -1,61 +1,59 @@
-```markdown
-# AI Backlog
+# Backlog
 
-## Now
-1. **Renderer reads `financials` only**
-   - **AC**:
-     - Commercials table uses `financials.baseDays/baseRate/baseAmount`.
-     - Discount rows use `financials.mandayPct/mandayDaysDelta/mdAmt` and `ratePct/rtAmt`.
-     - Totals show `financials.implementationSubtotal` and `financials.grandTotal`.
-     - Removing legacy fields does not break Renderer.
+## NOW
+- **T-001 [M] Unify payload consumption (Renderer + Cockpit)**
+  - **AC**:
+    - Both pages render totals using `payload.financials.grandTotal` when present.
+    - Fallback to legacy fields maintains identical numbers to PDF.
+    - Message + `#lk` token fallback both verified in Chrome/Edge.
+- **T-002 [S] Dynamic Gantt sizing in Cockpit**
+  - **AC**:
+    - Timeline never truncates on narrow/wide viewports.
+    - SVG height adapts to number of phases; no scrollbars during print.
+    - Window resize triggers reflow ≤16ms average (throttle ok).
+- **T-003 [M] Timeline inputs (configurable in UI)**
+  - **AC**:
+    - Controls for **start date**, **workdays/week (4–6)**, **blackouts** (date ranges) exist.
+    - Values persist to `unifiedPayload.timeline` and affect Gantt.
+    - Proposal PDF/Renderer show identical timeline summary.
+- **T-004 [S] Cockpit exports restored**
+  - **AC**:
+    - **CSV (weekly)** export button downloads non-empty CSV; week boundaries correct.
+    - **Generate .ikm** triggers existing `ikm.js` path without runtime error.
+- **T-005 [S] UX contract enforcement (lint + tokens)**
+  - **AC**:
+    - Shared CSS variables (spacing, radius, shadows) defined and used in both HTML pages.
+    - Focus ring and keyboard traversal verified for all interactive elements.
+- **T-006 [M] Error states & guards**
+  - **AC**:
+    - If payload missing/invalid, pages show non-blocking inline error and offer sample load.
+    - Numbers clamp to non-negative; formatting always MYR with 0/2 decimals per rule.
 
-2. **Cockpit Gantt: dynamic sizing + long-range handling**
-   - **AC**:
-     - Timeline fits container width/height without truncation at any `estimatedWeeks` (4–72).
-     - No horizontal scrollbar when printing.
-     - Week labels do not overlap (auto-thin if <12px step).
-     - Blackouts visible with ≥0.5 opacity; phases readable atop.
+## NEXT
+- **T-010 [M] AMS model options**
+  - **AC**: Support fixed RM/month and manday×rate AMS; picker persisted in payload.
+- **T-011 [S] Scope → effort presets**
+  - **AC**: Selecting capabilities adjusts suggested buckets (functional/FRICEW/wrapper).
+- **T-012 [M] Milestones generator**
+  - **AC**: Auto-splits payments by phase end; totals match `financials.grandTotal`.
+- **T-013 [S] JSON schema & validator**
+  - **AC**: JSON Schema for `unifiedPayload`; runtime validation with readable errors.
+- **T-014 [S] Print polish**
+  - **AC**: A4/letter print styles; page breaks avoid splitting tables/bars.
+- **T-015 [M] Test coverage**
+  - **AC**: Unit tests for calculators and payload builder; CI badge ≥80% lines.
+- **T-016 [S] Persist last-used**
+  - **AC**: Calculator restores last controls on load; “Reset to defaults” available.
 
-3. **Chip a11y (scope pickers)**
-   - **AC**:
-     - Chips are `button[aria-pressed]` with visible focus ring.
-     - Keyboard toggle with `Space`/`Enter`.
-     - Screen reader announces label + selected state.
+## LATER (parking lot)
+- T-030 [L] Multi-currency & locale (MYR, SGD, USD).
+- T-031 [L] Auth for internal pages; signed URL hand-off.
+- T-032 [M] Scenario compare (A/B proposals).
+- T-033 [M] PDF generation via serverless (exact pagination).
+- T-034 [M] Import from CSV/Excel staffing plan.
 
-## Next
-4. **Persist user settings**
-   - **AC**:
-     - On load, the app restores last-used inputs from `localStorage`.
-     - “Reset to defaults” clears persisted state.
-
-5. **SST / Tax line**
-   - **AC**:
-     - Toggle “Apply SST” + rate field (%).
-     - Renderer shows separate tax row and grand total including SST.
-     - JSON export includes `tax: { enabled, ratePct, amount }`.
-
-6. **AMS discount model**
-   - **AC**:
-     - Optional AMS % discount or stepped pricing by months.
-     - Renderer footnote clarifies AMS assumptions.
-
-## Later
-7. **Phase-level effort split**
-   - **AC**:
-     - UI distributes mandays across phases; Cockpit uses it to compute role/FTE.
-     - Renderer timeline duration aligns with phase sums.
-
-8. **Milestone editor**
-   - **AC**:
-     - User can add/edit milestone % and labels.
-     - Renderer table recalculates amounts.
-
-9. **Multi-currency**
-   - **AC**:
-     - Currency switcher with locale-aware formatting.
-     - Stored in payload; renderer/cockpit reflect selection.
-
-10. **Unit tests for calculators**
-    - **AC**:
-      - Jest tests covering discount math, rounding, AMS, SST.
-      - ≥90% branch coverage on calculator module.
+## Quality Rails (always on)
+- **Accessibility**: Focus-visible, ARIA labels, keyboard operability, WCAG 2.1 AA contrast.
+- **Lighthouse**: PWA off, but ≥90 for Performance/Best Practices/SEO on key routes.
+- **Perf**: Avoid layout thrash; throttle resize; no blocking alerts in hot paths.
+- **Deps**: Keep React/Vite/TW current; run `npm audit` and prune unused packages.

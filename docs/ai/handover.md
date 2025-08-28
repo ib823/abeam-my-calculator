@@ -1,102 +1,55 @@
-# ABeam SAP Cloud ERP Calculator — AI Handover
+# ABeam MY Calculator — AI Handover
 
-## Overview
-Single-page React calculator that generates a unified pricing/timeline payload and hands it to two read-only views:
-- **Proposal Renderer** (`/proposal-renderer.html`) — client-facing PDF/print proposal.
-- **Internal Cockpit** (`/internal-cockpit.html`) — staffing/timeline cockpit with Gantt and CSV export.
+## Architecture (current)
+- **Frontend**: React 18 + Vite, Tailwind (utility classes already present in JSX), no backend.
+- **Build/Dev**: `vite` with `src/` app entry, `index.html` at repo root.
+- **Standalone views** (static HTML in `public/` or project root):
+  - `proposal-renderer.html` — client-facing printable proposal.
+  - `internal-cockpit.html` — internal resource cockpit.
+- **Data transport** (no server):
+  - **Unified payload** built in `src/App.jsx` (includes `financials` bucket).
+  - **Hand-off** via `window.postMessage({type:"proposalData", payload})` with **fallback** one-time `localStorage` token `ikm:payload:<token>` passed as `#lk=<token>` in the URL.
+  - Consumers read **postMessage** first; if missing, read `localStorage` using `#lk`.
 
-The calculator is the **source of truth** for financials and scope. Both renderer and cockpit consume the **same payload** via `postMessage` with a localStorage token fallback.
+## Key modules
+- `src/App.jsx`: Calculator UI, computes summary, **builds unified payload**, triggers:
+  - **PDF export**: in-memory HTML + `window.print()`.
+  - **Proposal**: opens `proposal-renderer.html` with payload.
+  - **Cockpit**: opens `internal-cockpit.html` with payload.
+- `proposal-renderer.html`: Receives payload, renders **commercials**, **milestones**, **scope**, and **SVG Gantt** (print-safe). Dynamic width/height; weekends excluded; blackout shading; `*` on end-in-blackout.
+- `internal-cockpit.html`: Receives same payload; shows **Totals/AMS**, **phase allocations**, **timeline** prototype; supports CSV weekly export and `.ikm` generation (scripts present as placeholders if not wired).
 
----
+## Data flow (happy path)
+1. User configures **mandays**, **rate/discounts**, **AMS**, **team/weekdays**, **scope**.
+2. App computes **summary** (base & final days/rate, discounts, AMS, rounding, totals) and derives **timeline weeks**.
+3. App builds **unified payload**:
+   - Calculator knobs (client, tier, staffing, scope),
+   - Renderer fields (e.g., `grandTotal`, `totalMandays`) via legacy builder if used,
+   - **`financials`**: canonical numbers shown in PDF (single source of truth).
+4. App opens a new tab to renderer/cockpit with `#lk=<token>` and sends `postMessage`.
+5. Target page renders immediately on message; if missed, loads from `localStorage` using token.
 
-## Architecture
+## What works today
+- Calculator renders and recomputes **finalDays**, **finalRate**, **implementationSubtotal**, **grandTotal**.
+- **PDF export** opens print-ready HTML (hero + effort + financials).
+- **Proposal Renderer** loads payload (message/token), shows summary tables and **Gantt** (dynamic sizing).
+- **Cockpit** loads same payload, shows totals/AMS and timeline (prototype).
 
-React (Vite) SPA
-└─ src/App.jsx
-├─ UI: inputs (mandays, discounts, AMS), scope pickers, summary
-├─ compute: pdfSummary (base/final days, rate, amounts)
-├─ buildUnifiedPayload() ← canonical output for all consumers
-└─ openWithPayload(url,payload) → postMessage + #lk token fallback
+## Known limitations / active risks
+- **Popup blockers** may block new tabs; fallback still requires manual allow.
+- **LocalStorage hand-off** is origin-bound; cross-origin won’t work.
+- **AMS model** is fixed-price (RM/month) only; no tiered/discount logic.
+- **No auth/ACL**; internal pages are accessible if the URL is known.
+- **A11y**: keyboard and focus-visible paths exist in browser defaults only; needs explicit rules.
+- **Rounding** and discount precedence are simple; edge cases (e.g., negative totals) not guarded.
 
-/public
-├─ proposal-renderer.html (vanilla JS receiver + print-safe UI)
-├─ internal-cockpit.html (vanilla JS receiver + Gantt/CSV)
-├─ abeam-logo.png
-└─ (optional) proposalPayload.sample.json
+## Open items that matter
+- Ensure **both** `internal-cockpit.html` and `proposal-renderer.html` read **`payload.financials`** when present.
+- Confirm **Gantt** renders in **Cockpit** after refactor (message listener and dynamic sizing intact).
+- Re-introduce **CSV weekly** and **.ikm** export wiring in Cockpit if removed during cleanup.
+- Document and centralize the **unified payload schema**.
 
-Data hand-off:
-App.jsx → window.open(/page#lk=token) → postMessage({type:"proposalData", payload})
-Renderer/Cockpit → read postMessage OR read localStorage['ikm:payload:<token>']
-
-pgsql
-Copy code
-
-**Canonical payload shape (minimum):**
-```ts
-{
-  clientName, clientShort, packageTier,
-  functional, fricew, technical, wrapper, totalMandays,
-  teamSize, workdays, estimatedWeeks,
-  myRate, mandayDiscount, rateDiscount, rounding,
-  amsMonths, amsMonthly,
-  selection: { capabilities: string[], forms: string[], interfaces: string[] },
-  financials: {
-    baseDays, baseRate, baseAmount,
-    mandayPct, ratePct, mandayDaysDelta, mdAmt, rtAmt,
-    finalDays, finalRate, implementationSubtotal,
-    amsBaseDays, amsRate, amsBasePrice, amsDays, amsPrice,
-    rounding, grandTotal
-  },
-  pdfSummarySnapshot?: any
-}
-Receiver contract:
-
-Prefer payload.financials.*.
-
-Fallback to legacy top-level fields if present.
-
-Key Flows
-User edits inputs → pdfSummary recomputes.
-
-Export → Proposal
-buildUnifiedPayload() → openWithPayload("/proposal-renderer.html", payload)
-Renderer fills hero totals, commercials table, milestones, scope, timeline (Gantt).
-
-Export → Cockpit
-Same payload via openWithPayload("/internal-cockpit.html", payload); Cockpit renders Gantt (print-safe SVG), reads financials, supports CSV/IKM export.
-
-PDF (client quick print)
-App constructs self-contained HTML (using pdfSummary) → window.print().
-
-Key Features
-Unified financials: Discounts (manday% → days, rate% → rate), rounding, AMS (fixed RM/month).
-
-Scope chips: Capabilities, Forms, Interfaces (keys → labels).
-
-Gantt: Workweek scale, blackout windows, dynamic width/height, print-safe SVG.
-
-Hand-off resiliency: postMessage + #lk → localStorage token fallback; optional BroadcastChannel.
-
-Session snapshot: sessionStorage["abeam_pdf_summary"] for quick debug/use.
-
-Extensibility Points
-Taxes/SST application (pre/post-discount).
-
-AMS discount model (percent or tiered).
-
-Phase-level effort split to drive resource planning.
-
-Persist user defaults to localStorage.
-
-Open Issues / PRs
-ISSUE-001: Renderer must prefer payload.financials everywhere (some table rows still read legacy fields).
-
-ISSUE-002: Cockpit Gantt occasionally overflows on very long projects; needs min-zoom/scroll affordance.
-
-ISSUE-003: Keyboard toggling for scope chips: ensure ARIA pressed state is announced consistently.
-
-PR-004: Unify payload builder + receivers (App.jsx + both HTML pages) — pending final review after refactor.
-
-PR-005: Dynamic Gantt sizing & blackout shading — merged; follow-ups for label overlap logic.
-
-PR-006: PDF export (App) restyle to match renderer typography — in progress.
+## What to build next (short)
+- UI toggles for **blackouts**, **workweek**, **start date** (persist to payload).
+- Persist last used config (localStorage key) + “Reset” control.
+- A11y & quality rails hardened (focus ring, keyboard nav, Lighthouse ≥90).
