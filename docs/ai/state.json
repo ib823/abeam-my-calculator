@@ -2,13 +2,23 @@
   "setupVersion": "2025-09-01",
   "lastSync": "2025-08-28T09:00:00+08:00",
   "currentSprint": "S-01",
-  "focus": ["Stabilize CI", "Ship one feature end-to-end"],
-  "openPRs": [],
-  "risks": ["No CI yet", "No PR templates"],
+  "focus": [
+    "Renderer reads payload.financials exclusively",
+    "Cockpit Gantt dynamic sizing and long-range handling",
+    "Scope chip accessibility and keyboard support"
+  ],
+  "openPRs": [
+    "PR-004: Unify payload builder & receivers",
+    "PR-006: PDF export restyle to match renderer"
+  ],
+  "risks": [
+    "Popup blockers may block new tab before postMessage; rely on token fallback",
+    "Very long projects (>72 weeks) can still create label overlap in Gantt"
+  ],
   "blockedOn": [],
   "next3Tasks": [
-    {"id":"T-001","title":"Add PR/Issue templates","effort":"S","status":"Ready"},
-    {"id":"T-002","title":"Add CI with artifacts","effort":"M","status":"Ready"},
-    {"id":"T-003","title":"Create npm run verify","effort":"S","status":"Ready"}
+    "Replace remaining legacy field reads in renderer with financials.*",
+    "Thin week labels when pixel step < 12px to prevent overlap",
+    "Persist calculator inputs to localStorage with reset-to-defaults"
   ]
 }
